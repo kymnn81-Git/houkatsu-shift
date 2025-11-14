@@ -336,6 +336,13 @@ h1 {
   background: #e8e8e8 !important;
 }
 
+/* 4列目以降のシフトセルは通常のスタイル */
+.calendar tbody td:nth-child(n+4) {
+  position: static;
+  z-index: auto;
+  background: white;
+}
+
 /* 担当セルのselect要素 */
 .assigned-cell {
   background: white;
@@ -362,6 +369,7 @@ h1 {
   min-height: 35px;
   user-select: none;
   font-weight: normal !important;
+  background: white;
 }
 
 .shift-cell:hover {
@@ -375,15 +383,15 @@ h1 {
 }
 
 .shift-cell.best {
-  background-color: var(--color-best);
+  background-color: var(--color-best) !important;
 }
 
 .shift-cell.good {
-  background-color: var(--color-good);
+  background-color: var(--color-good) !important;
 }
 
 .shift-cell.bad {
-  background-color: var(--color-bad);
+  background-color: var(--color-bad) !important;
 }
 
 .shift-cell.weekend-bg.best {
