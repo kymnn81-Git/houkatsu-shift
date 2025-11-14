@@ -639,7 +639,7 @@ import { getDatabase, ref, set, get, onValue } from 'https://www.gstatic.com/fir
 const firebaseConfig = {
   apiKey: "AIzaSyBpQF8Po_337C9a46dR1wXKDT3oE5TkQoI",
   authDomain: "gstatic-bdd55.firebaseapp.com",
-  databaseURL: "https://gstatic-bdd55-default-rtdb.firebaseio.com",
+  databaseURL: "https://houkatsu-shift-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "gstatic-bdd55",
   storageBucket: "gstatic-bdd55.firebasestorage.app",
   messagingSenderId: "476687726358",
@@ -746,7 +746,20 @@ async function loadData() {
 
 async function saveData() {
   try {
+    console.log('💾 保存開始...');
     updateSyncStatus('syncing');
+    
+    console.log('📊 保存するデータ:', {
+      members: members.length,
+      shiftData: Object.keys(shiftData).length,
+      assignedData: Object.keys(assignedData).length,
+      yearlyTotals: Object.keys(yearlyTotals).length,
+      customHolidays: customHolidays.length
+    });
+    
+    console.log('🔗 Firebase参照:', database);
+    
+    const startTime = Date.now();
     
     await set(ref(database, '/'), {
       members,
@@ -756,7 +769,8 @@ async function saveData() {
       customHolidays
     });
     
-    console.log('💾 データ保存完了');
+    const elapsed = Date.now() - startTime;
+    console.log(`✅ データ保存完了 (${elapsed}ms)`);
     
     // 保存完了後すぐに同期済みに戻す
     setTimeout(() => {
@@ -765,7 +779,10 @@ async function saveData() {
     
   } catch (error) {
     console.error('❌ データ保存エラー:', error);
+    console.error('エラー詳細:', error.message);
+    console.error('エラーコード:', error.code);
     updateSyncStatus('error');
+    alert('保存エラー: ' + error.message);
     
     // エラーでも2秒後に「同期済み」に戻す
     setTimeout(() => {
@@ -777,7 +794,11 @@ async function saveData() {
 let updateTimeout = null;
 
 function setupRealtimeListeners() {
+  console.log('👂 リアルタイムリスナーを設定中...');
+  
   onValue(ref(database, '/'), (snapshot) => {
+    console.log('📡 Firebaseからデータ受信');
+    
     // 既存の更新タイマーをクリア
     if (updateTimeout) {
       clearTimeout(updateTimeout);
@@ -786,6 +807,12 @@ function setupRealtimeListeners() {
     // 300ms後に更新（連続した更新を防ぐ）
     updateTimeout = setTimeout(() => {
       const data = snapshot.val() || {};
+      console.log('🔄 リアルタイム更新開始', {
+        members: data.members?.length || 0,
+        shiftData: Object.keys(data.shiftData || {}).length,
+        assignedData: Object.keys(data.assignedData || {}).length
+      });
+      
       if (data.members && data.members.length > 0) {
         members = data.members;
       }
@@ -798,8 +825,12 @@ function setupRealtimeListeners() {
       renderMemberList();
       renderHolidayList();
       updateCountTable();
-      console.log('🔄 リアルタイム更新');
+      console.log('✅ リアルタイム更新完了');
     }, 300);
+  }, (error) => {
+    console.error('❌ リアルタイムリスナーエラー:', error);
+    console.error('エラー詳細:', error.message);
+    alert('Firebase接続エラー: ' + error.message);
   });
 }
 
