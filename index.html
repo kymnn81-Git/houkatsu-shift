@@ -58,6 +58,15 @@ h1 {
   background: #0056b3;
 }
 
+.controls button.primary {
+  background: #28a745;
+  border-color: #28a745;
+}
+
+.controls button.primary:hover {
+  background: #218838;
+}
+
 .controls button.secondary {
   background: #6c757d;
   border-color: #6c757d;
@@ -549,6 +558,7 @@ h1 {
       </div>
 
       <div style="margin-top: 10px;">
+        <button onclick="manualSave()" class="primary">💾 保存</button>
         <button onclick="autoAssign()">🎯 未割当を自動割り振り（今月）</button>
         <button onclick="window.print()" class="secondary">🖨️ 印刷</button>
         <button onclick="resetData()" class="danger">🗑️ データリセット</button>
@@ -708,6 +718,11 @@ async function initApp() {
   renderMemberList();
   renderHolidayList();
   updateCountTable();
+  
+  // 初期化完了後、同期済みステータスを確実に設定
+  setTimeout(() => {
+    updateSyncStatus('success');
+  }, 1000);
 }
 
 async function loadData() {
@@ -729,20 +744,7 @@ async function loadData() {
   }
 }
 
-let saveTimeout = null;
-let syncTimeout = null;
-
 async function saveData() {
-  // 既存の保存タイマーをクリア
-  if (saveTimeout) {
-    clearTimeout(saveTimeout);
-  }
-  
-  // 同期ステータスのタイムアウトをクリア
-  if (syncTimeout) {
-    clearTimeout(syncTimeout);
-  }
-  
   try {
     updateSyncStatus('syncing');
     
@@ -754,22 +756,21 @@ async function saveData() {
       customHolidays
     });
     
-    updateSyncStatus('success');
     console.log('💾 データ保存完了');
     
-    // 3秒後に強制的に「同期済み」に戻す
-    syncTimeout = setTimeout(() => {
+    // 保存完了後すぐに同期済みに戻す
+    setTimeout(() => {
       updateSyncStatus('success');
-    }, 3000);
+    }, 500);
     
   } catch (error) {
     console.error('❌ データ保存エラー:', error);
     updateSyncStatus('error');
     
-    // エラーでも5秒後に「同期済み」に戻す
-    syncTimeout = setTimeout(() => {
+    // エラーでも2秒後に「同期済み」に戻す
+    setTimeout(() => {
       updateSyncStatus('success');
-    }, 5000);
+    }, 2000);
   }
 }
 
@@ -820,6 +821,12 @@ function updateSyncStatus(status) {
       break;
   }
 }
+
+window.manualSave = async function() {
+  console.log('💾 手動保存を開始');
+  await saveData();
+  alert('保存しました！');
+};
 
 window.addMember = async function() {
   const input = document.getElementById('newMemberName');
