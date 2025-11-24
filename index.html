@@ -6,9 +6,9 @@
 <title>シフト希望管理システム</title>
 <style>
 :root {
-  --color-best: #d4edda;
-  --color-good: #fff3cd;
-  --color-bad: #f8d7da;
+  --color-good: #d4edda;
+  --color-ok: #fff3cd;
+  --color-bad: #e8e8e8;
   --color-weekend: #e8e8e8;
   --color-assigned: #fff3cd;
   --border-color: #ccc;
@@ -295,6 +295,10 @@ h1 {
   font-size: 11px;
 }
 
+.calendar td:first-child.weekend-bg {
+  background: #e8e8e8 !important;
+}
+
 .calendar thead th:first-child {
   z-index: 11;
   background: #007bff;
@@ -312,6 +316,22 @@ h1 {
   font-size: 11px;
 }
 
+/* PM時間セル（rowSpanのため、nth-child(1)になる） */
+.calendar tbody td.pm-time-cell {
+  position: sticky;
+  left: 35px;
+  background: white;
+  z-index: 5;
+  font-weight: bold;
+  min-width: 30px;
+  max-width: 30px;
+  font-size: 11px;
+}
+
+.calendar tbody td.pm-time-cell.weekend-bg {
+  background: #e8e8e8;
+}
+
 .calendar thead th:nth-child(2) {
   position: sticky;
   left: 35px;
@@ -325,11 +345,26 @@ h1 {
 .calendar tbody td:nth-child(3) {
   position: sticky;
   left: 65px;
-  background: white;
+  background: #ffe6f0;
   z-index: 5;
   font-weight: bold;
   min-width: 70px;
   font-size: 16px;
+}
+
+/* PM担当セル（rowSpanのため、nth-child(2)になる） */
+.calendar tbody td.pm-assigned-cell {
+  position: sticky;
+  left: 65px;
+  background: #ffe6f0;
+  z-index: 5;
+  font-weight: bold;
+  min-width: 70px;
+  font-size: 16px;
+}
+
+.calendar tbody td.pm-assigned-cell.weekend-bg {
+  background: #e8e8e8 !important;
 }
 
 .calendar thead th:nth-child(3) {
@@ -340,21 +375,108 @@ h1 {
   min-width: 70px;
 }
 
-/* 休日行の担当列も確実に白にする */
+/* 休日行の担当列 */
 .calendar tbody td:nth-child(3).weekend-bg {
   background: #e8e8e8 !important;
 }
 
-/* 4列目以降のシフトセルは通常のスタイル */
-.calendar tbody td:nth-child(n+4) {
+/* バックアップ担当列固定 */
+.calendar tbody td:nth-child(4) {
+  position: sticky;
+  left: 135px;
+  background: #d0e8ff;
+  z-index: 5;
+  font-weight: bold;
+  min-width: 70px;
+  font-size: 16px;
+}
+
+/* PMバックアップ担当セル（rowSpanのため、nth-child(3)になる） */
+.calendar tbody td.pm-backup-assigned-cell {
+  position: sticky;
+  left: 135px;
+  background: #d0e8ff;
+  z-index: 5;
+  font-weight: bold;
+  min-width: 70px;
+  font-size: 16px;
+}
+
+.calendar tbody td.pm-backup-assigned-cell.weekend-bg {
+  background: #e8e8e8 !important;
+}
+
+.calendar thead th:nth-child(4) {
+  position: sticky;
+  left: 135px;
+  z-index: 11;
+  background: #007bff;
+  min-width: 70px;
+}
+
+/* 休日行のバックアップ担当列 */
+.calendar tbody td:nth-child(4).weekend-bg {
+  background: #e8e8e8 !important;
+}
+
+/* 5列目以降のシフトセルは通常のスタイル */
+.calendar tbody td:nth-child(n+5) {
   position: static;
   z-index: auto;
-  background: white;
+  background: white !important;
+}
+
+/* PM行のシフトセル */
+.calendar tbody td.pm-shift-cell {
+  position: static;
+  z-index: auto;
+  background: white !important;
 }
 
 /* 担当セルのselect要素 */
 .assigned-cell {
+  background: #ffe6f0;
+}
+
+.assigned-cell select {
+  width: 100%;
+  padding: 4px 2px;
+  font-size: 14px;
+  border: 1px solid #ffb3d9;
+  border-radius: 3px;
+  background: #ffe6f0;
+}
+
+.assigned-cell.weekend-bg {
+  background: #e8e8e8 !important;
+}
+
+.assigned-cell.weekend-bg select {
+  background: #e8e8e8;
+  border-color: #ccc;
+}
+
+/* バックアップ担当セルのselect要素 */
+.backup-assigned-cell {
+  background: #d0e8ff;
+}
+
+.backup-assigned-cell select {
+  width: 100%;
+  padding: 4px 2px;
+  font-size: 14px;
+  border: 1px solid #99ccff;
+  border-radius: 3px;
   background: white;
+}
+
+.backup-assigned-cell.weekend-bg {
+  background: #e8e8e8 !important;
+}
+
+.backup-assigned-cell.weekend-bg select {
+  background: #e8e8e8;
+  border-color: #ccc;
 }
 
 .assigned-cell select {
@@ -391,28 +513,26 @@ h1 {
   transform: scale(0.95);
 }
 
-.shift-cell.best {
-  background-color: var(--color-best) !important;
+/* 平日のシフトセル色 - 最高優先順位 */
+table.calendar tbody td.shift-cell.good,
+table.calendar tbody td.pm-shift-cell.good {
+  background-color: #d4edda !important;
 }
 
-.shift-cell.good {
-  background-color: var(--color-good) !important;
+table.calendar tbody td.shift-cell.ok,
+table.calendar tbody td.pm-shift-cell.ok {
+  background-color: #fff3cd !important;
 }
 
-.shift-cell.bad {
-  background-color: var(--color-bad) !important;
+table.calendar tbody td.shift-cell.bad,
+table.calendar tbody td.pm-shift-cell.bad {
+  background-color: #e8e8e8 !important;
 }
 
-.shift-cell.weekend-bg.best {
-  background-color: #c8e6c9 !important;
-}
-
-.shift-cell.weekend-bg.good {
-  background-color: #fff9c4 !important;
-}
-
-.shift-cell.weekend-bg.bad {
-  background-color: #ffcdd2 !important;
+/* 休日のシフトセル - 全てグレー（記号に関係なく） */
+table.calendar tbody td.shift-cell.weekend-bg,
+table.calendar tbody td.pm-shift-cell.weekend-bg {
+  background-color: #e8e8e8 !important;
 }
 
 .assigned-cell select {
@@ -529,6 +649,59 @@ h1 {
     padding: 6px 10px;
   }
 }
+
+/* === 最優先色設定（最後に記述） === */
+/* 5列目以降のメンバー列 - 確実に白背景 */
+table.calendar tbody tr td:nth-child(n+5) {
+  background-color: white !important;
+}
+
+/* 5列目以降 - ○△×がない場合は白 */
+table.calendar tbody tr td:nth-child(n+5):not(.good):not(.ok):not(.bad):not(.weekend-bg) {
+  background-color: white !important;
+}
+
+/* PM行の5列目以降のメンバー列 - 確実に白背景 */
+table.calendar tbody tr td.pm-shift-cell {
+  background-color: white !important;
+}
+
+table.calendar tbody tr td.pm-shift-cell:not(.good):not(.ok):not(.bad):not(.weekend-bg) {
+  background-color: white !important;
+}
+
+/* 平日 - ○：緑色 */
+table.calendar tbody tr td.shift-cell.good:not(.weekend-bg),
+table.calendar tbody tr td.pm-shift-cell.good:not(.weekend-bg),
+table.calendar tbody tr td:nth-child(n+5).good:not(.weekend-bg) {
+  background-color: #d4edda !important;
+}
+
+/* 平日 - △：黄色 */
+table.calendar tbody tr td.shift-cell.ok:not(.weekend-bg),
+table.calendar tbody tr td.pm-shift-cell.ok:not(.weekend-bg),
+table.calendar tbody tr td:nth-child(n+5).ok:not(.weekend-bg) {
+  background-color: #fff3cd !important;
+}
+
+/* 平日 - ×：グレー */
+table.calendar tbody tr td.shift-cell.bad:not(.weekend-bg),
+table.calendar tbody tr td.pm-shift-cell.bad:not(.weekend-bg),
+table.calendar tbody tr td:nth-child(n+5).bad:not(.weekend-bg) {
+  background-color: #e8e8e8 !important;
+}
+
+/* 休日 - 全列グレー（記号に関係なく、最優先） */
+table.calendar tbody tr td.weekend-bg {
+  background-color: #e8e8e8 !important;
+}
+
+table.calendar tbody tr td:nth-child(n+5).weekend-bg,
+table.calendar tbody tr td.shift-cell.weekend-bg,
+table.calendar tbody tr td.pm-shift-cell.weekend-bg {
+  background-color: #e8e8e8 !important;
+}
+
 </style>
 </head>
 <body>
@@ -564,6 +737,13 @@ h1 {
         <button onclick="resetData()" class="danger">🗑️ データリセット</button>
       </div>
     </div>
+  </div>
+
+  <div class="no-print" style="text-align: right; margin: 10px 20px 5px; font-size: 13px; color: #555;">
+    <strong>【記号の意味】</strong>
+    <span style="margin-left: 15px; color: #155724; font-weight: bold;">○ 可</span>
+    <span style="margin-left: 15px; color: #856404; font-weight: bold;">△ バックアップ可</span>
+    <span style="margin-left: 15px; color: #721c24; font-weight: bold;">× 不可</span>
   </div>
 
   <div class="calendar-container">
@@ -685,6 +865,7 @@ let currentMonth = new Date().getMonth() + 1;
 let members = ["竹本", "村松", "冨樫", "米村", "大原", "大橋", "野々垣", "大川", "後閑", "内藤", "吉田", "藤井", "山崎"];
 let shiftData = {};
 let assignedData = {};
+let backupAssignedData = {};
 let yearlyTotals = {};
 let customHolidays = [];
 
@@ -702,7 +883,7 @@ const holidays = {
   '2025-05-05': 'こどもの日', '2025-05-06': '振替休日', '2025-07-21': '海の日',
   '2025-08-11': '山の日', '2025-09-15': '敬老の日', '2025-09-23': '秋分の日',
   '2025-10-13': 'スポーツの日', '2025-11-03': '文化の日', '2025-11-23': '勤労感謝の日',
-  '2025-11-24': '振替休日', '2025-12-23': '天皇誕生日', '2026-01-01': '元日', 
+  '2025-11-24': '振替休日', '2026-01-01': '元日', 
   '2026-01-12': '成人の日', '2026-02-11': '建国記念の日', '2026-02-23': '天皇誕生日', 
   '2026-03-20': '春分の日', '2026-04-29': '昭和の日', '2026-05-03': '憲法記念日', 
   '2026-05-04': 'みどりの日', '2026-05-05': 'こどもの日', '2026-05-06': '振替休日', 
@@ -735,6 +916,7 @@ async function loadData() {
     }
     shiftData = data.shiftData || {};
     assignedData = data.assignedData || {};
+    backupAssignedData = data.backupAssignedData || {};
     yearlyTotals = data.yearlyTotals || {};
     customHolidays = data.customHolidays || [];
 
@@ -753,6 +935,7 @@ async function saveData() {
       members: members.length,
       shiftData: Object.keys(shiftData).length,
       assignedData: Object.keys(assignedData).length,
+      backupAssignedData: Object.keys(backupAssignedData).length,
       yearlyTotals: Object.keys(yearlyTotals).length,
       customHolidays: customHolidays.length
     });
@@ -765,6 +948,7 @@ async function saveData() {
       members,
       shiftData,
       assignedData,
+      backupAssignedData,
       yearlyTotals,
       customHolidays
     });
@@ -810,7 +994,8 @@ function setupRealtimeListeners() {
       console.log('🔄 リアルタイム更新開始', {
         members: data.members?.length || 0,
         shiftData: Object.keys(data.shiftData || {}).length,
-        assignedData: Object.keys(data.assignedData || {}).length
+        assignedData: Object.keys(data.assignedData || {}).length,
+        backupAssignedData: Object.keys(data.backupAssignedData || {}).length
       });
       
       if (data.members && data.members.length > 0) {
@@ -818,6 +1003,7 @@ function setupRealtimeListeners() {
       }
       shiftData = data.shiftData || {};
       assignedData = data.assignedData || {};
+      backupAssignedData = data.backupAssignedData || {};
       yearlyTotals = data.yearlyTotals || {};
       customHolidays = data.customHolidays || [];
       
@@ -918,6 +1104,17 @@ window.removeMember = async function(name) {
   });
   
   console.log(`担当データ削除: ${deletedAssignments}件`);
+  
+  // バックアップ担当データの削除
+  let deletedBackupAssignments = 0;
+  Object.keys(backupAssignedData).forEach(key => {
+    if (backupAssignedData[key] === name) {
+      delete backupAssignedData[key];
+      deletedBackupAssignments++;
+    }
+  });
+  
+  console.log(`バックアップ担当データ削除: ${deletedBackupAssignments}件`);
   
   // 累計データの削除
   if (yearlyTotals[name]) {
@@ -1058,7 +1255,7 @@ function renderCalendar() {
   document.getElementById('currentMonth').textContent = `${currentYear}年${currentMonth}月`;
   
   const headerRow = document.getElementById('headerRow');
-  headerRow.innerHTML = '<th>日付</th><th>時間</th><th>担当</th>';
+  headerRow.innerHTML = '<th>日付</th><th>時間</th><th>担当</th><th>バックアップ担当</th>';
   members.forEach(name => {
     headerRow.innerHTML += `<th>${name}</th>`;
   });
@@ -1109,20 +1306,28 @@ function renderCalendar() {
     amAssignCell.appendChild(amSelect);
     amRow.appendChild(amAssignCell);
     
+    // AMバックアップ担当セル
+    const amBackupAssignCell = document.createElement('td');
+    amBackupAssignCell.className = `backup-assigned-cell ${bgClass}`;
+    const amBackupSelect = document.createElement('select');
+    amBackupSelect.innerHTML = '<option value="">-</option>' + members.map(m => 
+      `<option value="${m}" ${backupAssignedData[dateStr + '_am'] === m ? 'selected' : ''}>${m}</option>`
+    ).join('');
+    amBackupSelect.addEventListener('change', async function() {
+      await updateBackupAssigned(dateStr, 'am', this.value);
+    });
+    amBackupAssignCell.appendChild(amBackupSelect);
+    amRow.appendChild(amBackupAssignCell);
+    
     // AMシフト希望セル
     members.forEach(name => {
       const key = `${dateStr}_${name}_am`;
       const value = shiftData[key] || '';
-      const cellClass = value === '◎' ? 'best' : value === '○' ? 'good' : value === '×' ? 'bad' : '';
+      const cellClass = value === '○' ? 'good' : value === '△' ? 'ok' : value === '×' ? 'bad' : '';
       
       const td = document.createElement('td');
       td.className = `shift-cell ${cellClass} ${bgClass}`;
       td.textContent = value || '-';
-      
-      // ◎の場合だけフォントサイズを大きくする
-      if (value === '◎') {
-        td.style.fontSize = '18px';
-      }
       
       td.setAttribute('data-date', dateStr);
       td.setAttribute('data-name', name);
@@ -1138,13 +1343,13 @@ function renderCalendar() {
     
     // PM時間セル
     const pmTimeCell = document.createElement('td');
-    pmTimeCell.className = bgClass;
+    pmTimeCell.className = `pm-time-cell ${bgClass}`;
     pmTimeCell.textContent = 'PM';
     pmRow.appendChild(pmTimeCell);
     
     // PM担当セル
     const pmAssignCell = document.createElement('td');
-    pmAssignCell.className = `assigned-cell ${bgClass}`;
+    pmAssignCell.className = `assigned-cell pm-assigned-cell ${bgClass}`;
     const pmSelect = document.createElement('select');
     pmSelect.innerHTML = '<option value="">-</option>' + members.map(m => 
       `<option value="${m}" ${assignedData[dateStr + '_pm'] === m ? 'selected' : ''}>${m}</option>`
@@ -1155,20 +1360,28 @@ function renderCalendar() {
     pmAssignCell.appendChild(pmSelect);
     pmRow.appendChild(pmAssignCell);
     
+    // PMバックアップ担当セル
+    const pmBackupAssignCell = document.createElement('td');
+    pmBackupAssignCell.className = `backup-assigned-cell pm-backup-assigned-cell ${bgClass}`;
+    const pmBackupSelect = document.createElement('select');
+    pmBackupSelect.innerHTML = '<option value="">-</option>' + members.map(m => 
+      `<option value="${m}" ${backupAssignedData[dateStr + '_pm'] === m ? 'selected' : ''}>${m}</option>`
+    ).join('');
+    pmBackupSelect.addEventListener('change', async function() {
+      await updateBackupAssigned(dateStr, 'pm', this.value);
+    });
+    pmBackupAssignCell.appendChild(pmBackupSelect);
+    pmRow.appendChild(pmBackupAssignCell);
+    
     // PMシフト希望セル
     members.forEach(name => {
       const key = `${dateStr}_${name}_pm`;
       const value = shiftData[key] || '';
-      const cellClass = value === '◎' ? 'best' : value === '○' ? 'good' : value === '×' ? 'bad' : '';
+      const cellClass = value === '○' ? 'good' : value === '△' ? 'ok' : value === '×' ? 'bad' : '';
       
       const td = document.createElement('td');
-      td.className = `shift-cell ${cellClass} ${bgClass}`;
+      td.className = `shift-cell pm-shift-cell ${cellClass} ${bgClass}`;
       td.textContent = value || '-';
-      
-      // ◎の場合だけフォントサイズを大きくする
-      if (value === '◎') {
-        td.style.fontSize = '18px';
-      }
       
       td.setAttribute('data-date', dateStr);
       td.setAttribute('data-name', name);
@@ -1197,7 +1410,7 @@ async function toggleShift(date, member, period) {
   const key = `${date}_${member}_${period}`;
   const current = shiftData[key] || '';
   
-  const nextValue = current === '' ? '◎' : current === '◎' ? '○' : current === '○' ? '×' : '';
+  const nextValue = current === '' ? '○' : current === '○' ? '△' : current === '△' ? '×' : '';
   
   if (nextValue === '') {
     delete shiftData[key];
@@ -1236,6 +1449,19 @@ async function updateAssigned(date, period, newAssigned) {
   
   await saveData();
   updateCountTable();
+}
+
+async function updateBackupAssigned(date, period, newBackupAssigned) {
+  const key = `${date}_${period}`;
+  
+  if (newBackupAssigned) {
+    backupAssignedData[key] = newBackupAssigned;
+  } else {
+    delete backupAssignedData[key];
+  }
+  
+  await saveData();
+  renderCalendar();
 }
 
 window.autoAssign = async function() {
@@ -1309,8 +1535,8 @@ function selectBestMember(date, period) {
     const totals = yearlyTotals[name] || { am: 0, pm: 0 };
     
     let priority = 0;
-    if (preference === '◎') priority = 3;
-    else if (preference === '○') priority = 2;
+    if (preference === '○') priority = 3;
+    else if (preference === '△') priority = 2;
     else if (preference === '') priority = 1;
     else if (preference === '×') priority = 0;
     
@@ -1429,6 +1655,7 @@ window.resetData = async function() {
   members = ["竹本", "村松", "冨樫", "米村", "大原", "大橋", "野々垣", "大川", "後閑", "内藤", "吉田", "藤井", "山崎"];
   shiftData = {};
   assignedData = {};
+  backupAssignedData = {};
   yearlyTotals = {};
   customHolidays = [];
   
