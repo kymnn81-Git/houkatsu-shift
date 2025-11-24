@@ -709,8 +709,10 @@ table.calendar tbody tr td.pm-shift-cell.weekend-bg {
 <div id="loginScreen" class="login-container">
   <div class="login-box">
     <h1>🗓️ シフト管理システム</h1>
-    <input type="password" id="passwordInput" placeholder="パスワードを入力" onkeypress="if(event.key==='Enter') login()">
-    <button onclick="login()">ログイン</button>
+    <p style="color: #666; margin-bottom: 20px;">登録されたメールアドレスでログインしてください</p>
+    <input type="email" id="emailInput" placeholder="メールアドレス" style="margin-bottom: 10px;">
+    <input type="password" id="passwordInput" placeholder="パスワード" onkeypress="if(event.key==='Enter') loginWithEmail()">
+    <button onclick="loginWithEmail()">ログイン</button>
     <div id="loginError" class="error-message"></div>
   </div>
 </div>
@@ -815,6 +817,7 @@ table.calendar tbody tr td.pm-shift-cell.weekend-bg {
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getDatabase, ref, set, get, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBpQF8Po_337C9a46dR1wXKDT3oE5TkQoI",
@@ -828,37 +831,59 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
+const firebaseAuth = getAuth(app);
 console.log('✅ Firebase初期化完了');
 
-const auth = {
-  PASSWORD: 'jfcr',
-  SESSION_KEY: 'shift_authenticated'
-};
-
-window.login = function() {
+// メール/パスワードでログイン
+window.loginWithEmail = async function() {
+  const email = document.getElementById('emailInput').value;
   const password = document.getElementById('passwordInput').value;
   const errorDiv = document.getElementById('loginError');
   
-  if (password === auth.PASSWORD) {
-    sessionStorage.setItem(auth.SESSION_KEY, 'true');
+  if (!email || !password) {
+    errorDiv.textContent = 'メールアドレスとパスワードを入力してください';
+    return;
+  }
+  
+  try {
+    await signInWithEmailAndPassword(firebaseAuth, email, password);
+    console.log('✅ ログイン成功');
+    errorDiv.textContent = '';
+  } catch (error) {
+    console.error('❌ ログインエラー:', error);
+    if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+      errorDiv.textContent = 'メールアドレスまたはパスワードが正しくありません';
+    } else if (error.code === 'auth/invalid-email') {
+      errorDiv.textContent = 'メールアドレスの形式が正しくありません';
+    } else {
+      errorDiv.textContent = 'ログインに失敗しました: ' + error.message;
+    }
+  }
+};
+
+// ログアウト
+window.logout = async function() {
+  try {
+    await signOut(firebaseAuth);
+    console.log('✅ ログアウト成功');
+  } catch (error) {
+    console.error('❌ ログアウトエラー:', error);
+  }
+};
+
+// 認証状態の監視
+onAuthStateChanged(firebaseAuth, (user) => {
+  if (user) {
+    console.log('✅ ユーザー認証済み:', user.email);
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('mainScreen').style.display = 'block';
     initApp();
   } else {
-    errorDiv.textContent = 'パスワードが正しくありません';
+    console.log('❌ ユーザー未認証');
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('mainScreen').style.display = 'none';
   }
-};
-
-window.logout = function() {
-  sessionStorage.removeItem(auth.SESSION_KEY);
-  location.reload();
-};
-
-if (sessionStorage.getItem(auth.SESSION_KEY) === 'true') {
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('mainScreen').style.display = 'block';
-  initApp();
-}
+});
 
 let currentYear = new Date().getFullYear();
 let currentMonth = new Date().getMonth() + 1;
