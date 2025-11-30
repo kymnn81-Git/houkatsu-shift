@@ -269,6 +269,7 @@ h1 {
   border: 1px solid var(--border-color);
   padding: 4px;
   text-align: center;
+  font-weight: normal;
   vertical-align: middle;
   min-width: 60px;
 }
@@ -424,6 +425,7 @@ h1 {
   position: static;
   z-index: auto;
   background: white !important;
+  font-weight: normal !important;
 }
 
 /* PM行のシフトセル */
@@ -431,6 +433,7 @@ h1 {
   position: static;
   z-index: auto;
   background: white !important;
+  font-weight: normal !important;
 }
 
 /* 担当セルのselect要素 */
@@ -501,6 +504,10 @@ h1 {
   user-select: none;
   font-weight: normal !important;
   background: white;
+}
+
+.pm-shift-cell {
+  font-weight: normal !important;
 }
 
 .shift-cell:hover {
@@ -774,16 +781,18 @@ table.calendar tbody tr td.pm-shift-cell.weekend-bg {
           <thead>
             <tr>
               <th rowspan="2">メンバー</th>
-              <th colspan="3">今月</th>
-              <th colspan="3">累計</th>
+              <th colspan="4">今月</th>
+              <th colspan="4">累計</th>
             </tr>
             <tr>
               <th>AM</th>
               <th>PM</th>
               <th>合計</th>
+              <th>バックアップ</th>
               <th>AM</th>
               <th>PM</th>
               <th>合計</th>
+              <th>バックアップ</th>
             </tr>
           </thead>
           <tbody id="countTableBody"></tbody>
@@ -1491,14 +1500,51 @@ async function updateBackupAssigned(date, period, newBackupAssigned) {
 }
 
 window.autoAssign = async function() {
-  if (!confirm('今月の未割当日を自動的に割り振りますか？\n※土日・祝日はスキップします')) return;
+  if (!confirm('今月の未割当日を自動的に割り振りますか？\n※土日・祝日はスキップします\n※バックアップ担当も自動割り振りします')) return;
   
   console.log('🎯 自動割り振り開始');
   console.log(`対象月: ${currentYear}年${currentMonth}月`);
   console.log(`メンバー数: ${members.length}`);
   
+  // 今月の既存割り当てをカウント
+  const monthlyCount = {};
+  members.forEach(name => {
+    monthlyCount[name] = { am: 0, pm: 0 };
+  });
+  
   const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    
+    const amAssigned = assignedData[dateStr + '_am'];
+    const pmAssigned = assignedData[dateStr + '_pm'];
+    
+    if (amAssigned && monthlyCount[amAssigned]) {
+      monthlyCount[amAssigned].am++;
+    }
+    if (pmAssigned && monthlyCount[pmAssigned]) {
+      monthlyCount[pmAssigned].pm++;
+    }
+  }
+  
+  console.log('📊 今月の既存カウント:', monthlyCount);
+  
+  // バックアップのカウント
+  const monthlyBackupCount = {};
+  members.forEach(name => {
+    monthlyBackupCount[name] = 0;
+  });
+  
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const amBackup = backupAssignedData[dateStr + '_am'];
+    if (amBackup && monthlyBackupCount[amBackup] !== undefined) {
+      monthlyBackupCount[amBackup]++;
+    }
+  }
+  
   let assigned = 0;
+  let backupAssigned = 0;
   let skipped = 0;
   
   for (let day = 1; day <= daysInMonth; day++) {
@@ -1518,10 +1564,11 @@ window.autoAssign = async function() {
     
     // AM
     if (!assignedData[dateStr + '_am']) {
-      const member = selectBestMember(dateStr, 'am');
+      const member = selectBestMember(dateStr, 'am', monthlyCount);
       console.log(`${dateStr} AM: ${member}を選択`);
       if (member) {
         assignedData[dateStr + '_am'] = member;
+        monthlyCount[member].am++;
         if (!yearlyTotals[member]) yearlyTotals[member] = { am: 0, pm: 0 };
         yearlyTotals[member].am++;
         assigned++;
@@ -1530,26 +1577,39 @@ window.autoAssign = async function() {
     
     // PM
     if (!assignedData[dateStr + '_pm']) {
-      const member = selectBestMember(dateStr, 'pm');
+      const member = selectBestMember(dateStr, 'pm', monthlyCount);
       console.log(`${dateStr} PM: ${member}を選択`);
       if (member) {
         assignedData[dateStr + '_pm'] = member;
+        monthlyCount[member].pm++;
         if (!yearlyTotals[member]) yearlyTotals[member] = { am: 0, pm: 0 };
         yearlyTotals[member].pm++;
         assigned++;
       }
     }
+    
+    // バックアップ担当（AMのみ）
+    if (!backupAssignedData[dateStr + '_am']) {
+      const backup = selectBestBackup(dateStr, monthlyBackupCount);
+      console.log(`${dateStr} バックアップ: ${backup}を選択`);
+      if (backup) {
+        backupAssignedData[dateStr + '_am'] = backup;
+        monthlyBackupCount[backup]++;
+        backupAssigned++;
+      }
+    }
   }
   
-  console.log(`✅ 自動割り振り完了: ${assigned}件 (${skipped}日スキップ)`);
+  console.log('📊 今月の最終カウント:', monthlyCount);
+  console.log(`✅ 自動割り振り完了: 担当${assigned}件、バックアップ${backupAssigned}件 (${skipped}日スキップ)`);
   
   await saveData();
   renderCalendar();
   updateCountTable();
-  alert(`${assigned}件のシフトを自動割り振りしました\n（土日祝日${skipped}日はスキップしました）`);
+  alert(`自動割り振り完了\n担当: ${assigned}件\nバックアップ: ${backupAssigned}件\n（土日祝日${skipped}日はスキップしました）`);
 };
 
-function selectBestMember(date, period) {
+function selectBestMember(date, period, monthlyCount) {
   if (members.length === 0) {
     console.log('❌ メンバーが0人');
     return null;
@@ -1558,17 +1618,14 @@ function selectBestMember(date, period) {
   const candidates = members.map(name => {
     const key = `${date}_${name}_${period}`;
     const preference = shiftData[key] || '';
-    const totals = yearlyTotals[name] || { am: 0, pm: 0 };
+    const totals = monthlyCount[name] || { am: 0, pm: 0 };
     
-    let priority = 0;
-    if (preference === '○') priority = 3;
-    else if (preference === '△') priority = 2;
-    else if (preference === '') priority = 1;
-    else if (preference === '×') priority = 0;
+    // ×は除外、それ以外は全て選択可能
+    const isAvailable = preference !== '×';
     
     return {
       name,
-      priority,
+      isAvailable,
       preference,
       amTotal: totals.am,
       pmTotal: totals.pm,
@@ -1578,28 +1635,98 @@ function selectBestMember(date, period) {
   
   console.log(`${date} ${period} の候補:`, candidates);
   
-  const groups = {
-    3: candidates.filter(c => c.priority === 3),
-    2: candidates.filter(c => c.priority === 2),
-    1: candidates.filter(c => c.priority === 1),
-    0: candidates.filter(c => c.priority === 0)
-  };
+  // ×でない人だけを候補にする
+  const available = candidates.filter(c => c.isAvailable);
   
-  for (let p = 3; p >= 0; p--) {
-    if (groups[p].length > 0) {
-      groups[p].sort((a, b) => {
-        const aCount = period === 'am' ? a.amTotal : a.pmTotal;
-        const bCount = period === 'am' ? b.amTotal : b.pmTotal;
-        if (aCount !== bCount) return aCount - bCount;
-        return a.total - b.total;
-      });
-      console.log(`  優先度${p}グループから選択: ${groups[p][0].name}`);
-      return groups[p][0].name;
-    }
+  if (available.length === 0) {
+    console.log('  選択可能なメンバーなし（全員×）');
+    return null;
   }
   
-  console.log('  選択可能なメンバーなし');
-  return null;
+  // 完全公平：回数が最も少ない人を選ぶ
+  available.sort((a, b) => {
+    // 1. そのperiod（AM/PM）の回数が少ない人を最優先
+    const aCount = period === 'am' ? a.amTotal : a.pmTotal;
+    const bCount = period === 'am' ? b.amTotal : b.pmTotal;
+    if (aCount !== bCount) return aCount - bCount;
+    
+    // 2. 合計回数が少ない人を次に優先
+    if (a.total !== b.total) return a.total - b.total;
+    
+    // 3. 逆のperiodの回数も考慮（バランスを取る）
+    const aOtherCount = period === 'am' ? a.pmTotal : a.amTotal;
+    const bOtherCount = period === 'am' ? b.pmTotal : b.amTotal;
+    if (aOtherCount !== bOtherCount) return aOtherCount - bOtherCount;
+    
+    // 4. それでも同じなら○を優先（微調整）
+    if (a.preference === '○' && b.preference !== '○') return -1;
+    if (a.preference !== '○' && b.preference === '○') return 1;
+    
+    return 0;
+  });
+  
+  const selected = available[0];
+  console.log(`  完全公平モードで選択: ${selected.name} (記号:${selected.preference || '空白'}, 今月AM:${selected.amTotal}, 今月PM:${selected.pmTotal}, 今月合計:${selected.total})`);
+  return selected.name;
+}
+
+function selectBestBackup(date, monthlyBackupCount) {
+  if (members.length === 0) {
+    console.log('❌ メンバーが0人');
+    return null;
+  }
+  
+  // その日の担当者を除外
+  const amAssigned = assignedData[date + '_am'];
+  const pmAssigned = assignedData[date + '_pm'];
+  
+  const candidates = members.map(name => {
+    // 担当者は除外
+    if (name === amAssigned || name === pmAssigned) {
+      return null;
+    }
+    
+    const amKey = `${date}_${name}_am`;
+    const pmKey = `${date}_${name}_pm`;
+    const amPreference = shiftData[amKey] || '';
+    const pmPreference = shiftData[pmKey] || '';
+    
+    // AM/PMどちらかが×でなければ選択可能（完全公平モード）
+    const isAvailable = amPreference !== '×' || pmPreference !== '×';
+    
+    return {
+      name,
+      isAvailable,
+      amPreference,
+      pmPreference,
+      backupCount: monthlyBackupCount[name] || 0
+    };
+  }).filter(c => c !== null && c.isAvailable);
+  
+  if (candidates.length === 0) {
+    console.log('  バックアップ候補なし（全員×または担当者）');
+    return null;
+  }
+  
+  console.log(`${date} バックアップ候補:`, candidates);
+  
+  // 完全公平：バックアップ回数が最も少ない人を選ぶ
+  candidates.sort((a, b) => {
+    // 1. 今月のバックアップ回数が少ない人を優先
+    if (a.backupCount !== b.backupCount) return a.backupCount - b.backupCount;
+    
+    // 2. それでも同じなら○がある人を優先（微調整）
+    const aHasGood = a.amPreference === '○' || a.pmPreference === '○';
+    const bHasGood = b.amPreference === '○' || b.pmPreference === '○';
+    if (aHasGood && !bHasGood) return -1;
+    if (!aHasGood && bHasGood) return 1;
+    
+    return 0;
+  });
+  
+  const selected = candidates[0];
+  console.log(`  完全公平モードでバックアップ選択: ${selected.name} (今月バックアップ${selected.backupCount}回)`);
+  return selected.name;
 }
 
 function updateCountTable() {
@@ -1624,7 +1751,7 @@ function updateCountTable() {
   // 今月のカウントを計算
   const monthlyCount = {};
   members.forEach(name => {
-    monthlyCount[name] = { am: 0, pm: 0 };
+    monthlyCount[name] = { am: 0, pm: 0, backup: 0 };
   });
   
   const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
@@ -1633,6 +1760,8 @@ function updateCountTable() {
     
     const amAssigned = assignedData[dateStr + '_am'];
     const pmAssigned = assignedData[dateStr + '_pm'];
+    const amBackup = backupAssignedData[dateStr + '_am'];
+    const pmBackup = backupAssignedData[dateStr + '_pm'];
     
     if (amAssigned && monthlyCount[amAssigned]) {
       monthlyCount[amAssigned].am++;
@@ -1640,12 +1769,70 @@ function updateCountTable() {
     if (pmAssigned && monthlyCount[pmAssigned]) {
       monthlyCount[pmAssigned].pm++;
     }
+    if (amBackup && monthlyCount[amBackup]) {
+      monthlyCount[amBackup].backup++;
+    }
+    if (pmBackup && monthlyCount[pmBackup]) {
+      monthlyCount[pmBackup].backup++;
+    }
   }
+  
+  // 累計：11月（2024-11）から表示中の月までの合計
+  const cumulativeCount = {};
+  members.forEach(name => {
+    cumulativeCount[name] = { am: 0, pm: 0, backup: 0 };
+  });
+  
+  // 表示中の月の最終日を取得
+  const currentMonthStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+  const currentMonthLastDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-31`; // 31日として比較（実際の日数は関係ない）
+  
+  // assignedDataから11月以降、表示中の月までのデータをカウント
+  Object.keys(assignedData).forEach(key => {
+    const name = assignedData[key];
+    if (!name) return;
+    
+    // keyの形式: "YYYY-MM-DD_am" または "YYYY-MM-DD_pm"
+    const parts = key.split('_');
+    const dateStr = parts[0];
+    const period = parts[1];
+    
+    // 2024-11以降、かつ表示中の月以前かチェック
+    if (dateStr >= '2024-11-01' && dateStr.substring(0, 7) <= currentMonthStr) {
+      if (cumulativeCount[name]) {
+        if (period === 'am') {
+          cumulativeCount[name].am++;
+        } else if (period === 'pm') {
+          cumulativeCount[name].pm++;
+        }
+      }
+    }
+  });
+  
+  // backupAssignedDataから11月以降、表示中の月までのバックアップをカウント
+  Object.keys(backupAssignedData).forEach(key => {
+    const name = backupAssignedData[key];
+    if (!name) return;
+    
+    // keyの形式: "YYYY-MM-DD_am" または "YYYY-MM-DD_pm"
+    const parts = key.split('_');
+    const dateStr = parts[0];
+    
+    // 2024-11以降、かつ表示中の月以前かチェック
+    if (dateStr >= '2024-11-01' && dateStr.substring(0, 7) <= currentMonthStr) {
+      if (cumulativeCount[name]) {
+        cumulativeCount[name].backup++;
+      }
+    }
+  });
+  
+  console.log('📊 今月カウント:', monthlyCount);
+  console.log('📊 11月～' + currentMonthStr + 'の累計:', cumulativeCount);
   
   // テーブルに表示
   members.forEach(name => {
-    const monthly = monthlyCount[name] || { am: 0, pm: 0 };
-    const yearly = yearlyTotals[name] || { am: 0, pm: 0 };
+    const monthly = monthlyCount[name] || { am: 0, pm: 0, backup: 0 };
+    const cumulative = cumulativeCount[name] || { am: 0, pm: 0, backup: 0 };
     
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -1653,9 +1840,11 @@ function updateCountTable() {
       <td style="background: #e3f2fd;">${monthly.am}</td>
       <td style="background: #e3f2fd;">${monthly.pm}</td>
       <td style="background: #bbdefb; font-weight: bold;">${monthly.am + monthly.pm}</td>
-      <td>${yearly.am}</td>
-      <td>${yearly.pm}</td>
-      <td style="font-weight: bold;">${yearly.am + yearly.pm}</td>
+      <td style="background: #fff9c4;">${monthly.backup}</td>
+      <td>${cumulative.am}</td>
+      <td>${cumulative.pm}</td>
+      <td style="font-weight: bold;">${cumulative.am + cumulative.pm}</td>
+      <td style="background: #fff9c4;">${cumulative.backup}</td>
     `;
     tbody.appendChild(tr);
   });
