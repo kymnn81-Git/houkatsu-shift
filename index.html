@@ -742,6 +742,7 @@ table.calendar tbody tr td.pm-shift-cell.weekend-bg {
       <div style="margin-top: 10px;">
         <button onclick="manualSave()" class="primary">💾 保存</button>
         <button onclick="autoAssign()">🎯 未割当を自動割り振り（今月）</button>
+        <button onclick="copyScheduleToClipboard()" class="secondary">📧 担当表をコピー</button>
         <button onclick="window.print()" class="secondary">🖨️ 印刷</button>
         <button onclick="resetData()" class="danger">🗑️ データリセット</button>
       </div>
@@ -1860,6 +1861,54 @@ function updateTotalsDisplay() {
 function updateMonthlyCount() {
   updateCountTable();
 }
+
+window.copyScheduleToClipboard = async function() {
+  const monthName = `${currentYear}年${currentMonth}月`;
+  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+  
+  let text = `【${monthName} シフト担当表】\n\n`;
+  text += `日付        | AM担当 | PM担当 | バックアップ\n`;
+  text += `------------|--------|--------|-------------\n`;
+  
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const date = new Date(currentYear, currentMonth - 1, day);
+    const dayOfWeek = date.getDay();
+    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+    
+    // 土日・祝日チェック
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const isHoliday = holidays[dateStr] || customHolidays.includes(dateStr);
+    
+    if (isWeekend || isHoliday) {
+      continue; // 土日祝日はスキップ
+    }
+    
+    const amAssigned = assignedData[dateStr + '_am'] || '-';
+    const pmAssigned = assignedData[dateStr + '_pm'] || '-';
+    const backup = backupAssignedData[dateStr + '_am'] || '-';
+    
+    const dateDisplay = `${currentMonth}/${day}(${dayNames[dayOfWeek]})`;
+    text += `${dateDisplay.padEnd(12, ' ')}| ${amAssigned.padEnd(6, ' ')} | ${pmAssigned.padEnd(6, ' ')} | ${backup}\n`;
+  }
+  
+  text += `\n※土日祝日は除く\n`;
+  
+  try {
+    await navigator.clipboard.writeText(text);
+    alert('📧 担当表をクリップボードにコピーしました！\nメールに貼り付けてご利用ください。');
+  } catch (err) {
+    console.error('コピーに失敗:', err);
+    // フォールバック：テキストエリアを使う方法
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    alert('📧 担当表をクリップボードにコピーしました！\nメールに貼り付けてご利用ください。');
+  }
+};
 
 window.resetData = async function() {
   if (!confirm('すべてのデータを削除しますか？この操作は取り消せません。')) return;
