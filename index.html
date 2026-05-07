@@ -657,6 +657,50 @@ table.calendar tbody td.pm-shift-cell.weekend-bg {
   }
 }
 
+/* 個人別目標回数入力 */
+.target-input-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: white;
+  border: 1px solid #c8d8ff;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 13px;
+}
+
+.target-input-item .target-name {
+  font-weight: bold;
+  min-width: 40px;
+}
+
+.target-input-item input[type="number"] {
+  width: 52px;
+  text-align: center;
+  padding: 3px 4px;
+  border: 1px solid #aac;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+.target-input-item .target-unit {
+  font-size: 11px;
+  color: #888;
+}
+
+.target-input-item .target-badge {
+  background: #4a90e2;
+  color: white;
+  border-radius: 10px;
+  padding: 1px 6px;
+  font-size: 10px;
+  display: none;
+}
+
+.target-input-item.has-target .target-badge {
+  display: inline;
+}
+
 /* === 最優先色設定（最後に記述） === */
 /* 5列目以降のメンバー列 - 確実に白背景 */
 table.calendar tbody tr td:nth-child(n+5) {
@@ -758,6 +802,17 @@ table.calendar tbody tr td.pm-shift-cell.weekend-bg {
         <button onclick="migrateTo2025()" class="primary" style="background: #28a745;">🔄 既存データを2025年度に移行</button>
         <button onclick="resetData()" class="danger">🗑️ データリセット</button>
       </div>
+
+      <!-- 月間個人別目標回数設定 -->
+      <div id="targetSettingArea" style="margin-top:12px; padding:10px; background:#f0f4ff; border:1px solid #b0c4ff; border-radius:6px;">
+        <div style="font-weight:bold; margin-bottom:8px;">
+          📋 個人別目標回数（今月）
+          <span style="font-weight:normal; font-size:12px; color:#666; margin-left:10px;">
+            ※数字を入力→その回数まで割り振り　空欄→制限なし（均等）　0→割り振らない
+          </span>
+        </div>
+        <div id="targetInputList" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+      </div>
     </div>
   </div>
 
@@ -795,6 +850,7 @@ table.calendar tbody tr td.pm-shift-cell.weekend-bg {
             <tr>
               <th rowspan="2">メンバー</th>
               <th colspan="4">今月</th>
+              <th rowspan="2" style="background:#7986cb;">目標</th>
               <th colspan="4">累計</th>
             </tr>
             <tr>
@@ -930,6 +986,7 @@ let assignedData = {};
 let backupAssignedData = {};
 let yearlyTotals = {};
 let customHolidays = [];
+let monthlyTargets = {}; // { 'YYYY-MM': { memberName: targetCount } }
 
 const holidays = {
   '2024-01-01': '元日', '2024-01-08': '成人の日', '2024-02-11': '建国記念の日',
@@ -963,6 +1020,7 @@ async function initApp() {
   renderCalendar();
   renderMemberList();
   renderHolidayList();
+  renderTargetInputs();
   updateCountTable();
   
   // 初期化完了後、同期済みステータスを確実に設定
@@ -987,6 +1045,7 @@ async function loadData() {
     backupAssignedData = data.backupAssignedData || {};
     yearlyTotals = data.yearlyTotals || {};
     customHolidays = data.customHolidays || [];
+    monthlyTargets = data.monthlyTargets || {};
 
     console.log(`📥 ${currentFiscalYear}年度データ読み込み完了`, {members: members.length});
   } catch (error) {
@@ -1017,7 +1076,8 @@ async function saveData() {
       assignedData,
       backupAssignedData,
       yearlyTotals,
-      customHolidays
+      customHolidays,
+      monthlyTargets
     });
     
     const elapsed = Date.now() - startTime;
@@ -1081,10 +1141,12 @@ function setupRealtimeListeners() {
       backupAssignedData = data.backupAssignedData || {};
       yearlyTotals = data.yearlyTotals || {};
       customHolidays = data.customHolidays || [];
+      monthlyTargets = data.monthlyTargets || {};
       
       renderCalendar();
       renderMemberList();
       renderHolidayList();
+      renderTargetInputs();
       updateCountTable();
       console.log('✅ リアルタイム更新完了');
     }, 300);
@@ -1338,6 +1400,7 @@ window.changeMonth = function(delta) {
     });
   } else {
     renderCalendar();
+    renderTargetInputs();
     updateCountTable();
   }
 };
@@ -1375,6 +1438,7 @@ window.changeFiscalYear = async function() {
   renderCalendar();
   renderMemberList();
   renderHolidayList();
+  renderTargetInputs();
   updateCountTable();
   
   console.log(`✅ ${currentFiscalYear}年度に切り替えました`);
@@ -1593,6 +1657,56 @@ async function updateBackupAssigned(date, period, newBackupAssigned) {
   renderCalendar();
 }
 
+// ========== 月間個人別目標回数 ==========
+
+function getCurrentMonthKey() {
+  return `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+}
+
+function renderTargetInputs() {
+  const container = document.getElementById('targetInputList');
+  if (!container) return;
+  const key = getCurrentMonthKey();
+  const targets = (monthlyTargets && monthlyTargets[key]) ? monthlyTargets[key] : {};
+
+  container.innerHTML = members.map(name => {
+    const val = targets[name] !== undefined ? targets[name] : '';
+    const hasTarget = val !== '' && val !== undefined;
+    return `<div class="target-input-item${hasTarget ? ' has-target' : ''}" id="target-item-${name}">
+      <span class="target-name">${name}</span>
+      <input type="number" min="0" max="31" value="${val}" placeholder="－"
+        oninput="setMemberTarget('${name}', this.value)"
+        style="width:52px;">
+      <span class="target-unit">回</span>
+      <span class="target-badge">設定済</span>
+    </div>`;
+  }).join('');
+}
+
+window.setMemberTarget = async function(memberName, value) {
+  const key = getCurrentMonthKey();
+  if (!monthlyTargets) monthlyTargets = {};
+  if (!monthlyTargets[key]) monthlyTargets[key] = {};
+
+  const item = document.getElementById(`target-item-${memberName}`);
+
+  if (value === '' || value === null || value === undefined) {
+    delete monthlyTargets[key][memberName];
+    if (item) item.classList.remove('has-target');
+  } else {
+    monthlyTargets[key][memberName] = parseInt(value, 10);
+    if (item) item.classList.add('has-target');
+  }
+
+  // 自動保存（デバウンス）
+  clearTimeout(window._targetSaveTimer);
+  window._targetSaveTimer = setTimeout(async () => {
+    await saveData();
+  }, 800);
+};
+
+// ========================================
+
 window.autoAssign = async function() {
   if (!confirm('今月の未割当日を自動的に割り振りますか？\n※土日・祝日はスキップします\n※バックアップ担当も自動割り振りします')) return;
   
@@ -1708,59 +1822,80 @@ function selectBestMember(date, period, monthlyCount) {
     console.log('❌ メンバーが0人');
     return null;
   }
-  
+
+  // 月間目標を取得
+  const monthKey = getCurrentMonthKey();
+  const targets = (monthlyTargets && monthlyTargets[monthKey]) ? monthlyTargets[monthKey] : {};
+
   const candidates = members.map(name => {
     const key = `${date}_${name}_${period}`;
     const preference = shiftData[key] || '';
     const totals = monthlyCount[name] || { am: 0, pm: 0 };
-    
-    // ×は除外、それ以外は全て選択可能
+
+    // ×は除外
     const isAvailable = preference !== '×';
-    
+
+    // 月間目標チェック：0は割り振らない、数値設定済みで上限に達している場合は除外
+    const target = targets[name];
+    let targetExceeded = false;
+    if (target === 0) {
+      targetExceeded = true; // 0設定は割り振らない
+    } else if (target > 0) {
+      const currentTotal = totals.am + totals.pm;
+      targetExceeded = currentTotal >= target;
+    }
+
     return {
       name,
       isAvailable,
       preference,
       amTotal: totals.am,
       pmTotal: totals.pm,
-      total: totals.am + totals.pm
+      total: totals.am + totals.pm,
+      hasTarget: target !== undefined && target !== null && target !== '',
+      targetExceeded
     };
   });
-  
-  console.log(`${date} ${period} の候補:`, candidates);
-  
-  // ×でない人だけを候補にする
-  const available = candidates.filter(c => c.isAvailable);
-  
+
+  // ×でない かつ 目標に達していない人を優先候補に
+  const preferred = candidates.filter(c => c.isAvailable && !c.targetExceeded);
+
+  // 目標設定済みの人が全員上限に達している場合、制限なしメンバーにフォールバック
+  const available = preferred.length > 0 ? preferred : candidates.filter(c => c.isAvailable);
+
   if (available.length === 0) {
-    console.log('  選択可能なメンバーなし（全員×）');
+    console.log('  選択可能なメンバーなし（全員×または目標達成済み）');
     return null;
   }
-  
-  // 完全公平：回数が最も少ない人を選ぶ
+
+  // ソート：目標設定済みを優先し、残り回数が少ない人から埋める
   available.sort((a, b) => {
-    // 1. そのperiod（AM/PM）の回数が少ない人を最優先
+    // 1. 目標設定済みを優先（設定あり < 設定なし）
+    if (a.hasTarget && !b.hasTarget) return -1;
+    if (!a.hasTarget && b.hasTarget) return 1;
+
+    // 2. そのperiod（AM/PM）の回数が少ない人を優先
     const aCount = period === 'am' ? a.amTotal : a.pmTotal;
     const bCount = period === 'am' ? b.amTotal : b.pmTotal;
     if (aCount !== bCount) return aCount - bCount;
-    
-    // 2. 合計回数が少ない人を次に優先
+
+    // 3. 合計回数が少ない人を次に優先
     if (a.total !== b.total) return a.total - b.total;
-    
-    // 3. 逆のperiodの回数も考慮（バランスを取る）
+
+    // 4. 逆のperiodの回数も考慮（バランスを取る）
     const aOtherCount = period === 'am' ? a.pmTotal : a.amTotal;
     const bOtherCount = period === 'am' ? b.pmTotal : b.amTotal;
     if (aOtherCount !== bOtherCount) return aOtherCount - bOtherCount;
-    
-    // 4. それでも同じなら○を優先（微調整）
+
+    // 5. それでも同じなら○を優先
     if (a.preference === '○' && b.preference !== '○') return -1;
     if (a.preference !== '○' && b.preference === '○') return 1;
-    
+
     return 0;
   });
-  
+
   const selected = available[0];
-  console.log(`  完全公平モードで選択: ${selected.name} (記号:${selected.preference || '空白'}, 今月AM:${selected.amTotal}, 今月PM:${selected.pmTotal}, 今月合計:${selected.total})`);
+  console.log(`  選択: ${selected.name} (記号:${selected.preference || '空白'}, 今月合計:${selected.total}, 目標:${targets[selected.name] ?? '未設定'})`);
   return selected.name;
 }
 
@@ -1929,7 +2064,25 @@ function updateCountTable() {
   members.forEach(name => {
     const monthly = monthlyCount[name] || { am: 0, pm: 0, backup: 0 };
     const cumulative = cumulativeCount[name] || { am: 0, pm: 0, backup: 0 };
-    
+
+    // 目標回数を取得
+    const monthKey = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+    const targets = (monthlyTargets && monthlyTargets[monthKey]) ? monthlyTargets[monthKey] : {};
+    const target = targets[name];
+    const monthTotal = monthly.am + monthly.pm;
+    let targetDisplay = '-';
+    let targetStyle = 'background:#f0f4ff;';
+    if (target === 0) {
+      targetDisplay = '0（対象外）';
+      targetStyle = 'background:#eee; color:#999;';
+    } else if (target > 0) {
+      const reached = monthTotal >= target;
+      targetDisplay = `${monthTotal}/${target}`;
+      targetStyle = reached
+        ? 'background:#d4edda; font-weight:bold; color:#155724;'
+        : 'background:#fff3cd; font-weight:bold; color:#856404;';
+    }
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="font-weight: bold;">${name}</td>
@@ -1937,6 +2090,7 @@ function updateCountTable() {
       <td style="background: #e3f2fd;">${monthly.pm}</td>
       <td style="background: #bbdefb; font-weight: bold;">${monthly.am + monthly.pm}</td>
       <td style="background: #fff9c4;">${monthly.backup}</td>
+      <td style="${targetStyle}">${targetDisplay}</td>
       <td>${cumulative.am}</td>
       <td>${cumulative.pm}</td>
       <td style="font-weight: bold;">${cumulative.am + cumulative.pm}</td>
@@ -2100,6 +2254,7 @@ window.resetData = async function() {
   backupAssignedData = {};
   yearlyTotals = {};
   customHolidays = [];
+  monthlyTargets = {};
   
   await saveData();
   alert('データをリセットしました');
