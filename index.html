@@ -811,6 +811,23 @@ table.calendar tbody tr td.pm-shift-cell.weekend-bg {
             ※数字を入力→その回数まで割り振り　空欄→制限なし（均等）　0→割り振らない
           </span>
         </div>
+
+        <!-- 合計バランス表示 -->
+        <div id="targetBalanceBar" style="margin-bottom:10px; padding:10px 14px; border-radius:6px; font-size:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; background:white; border:2px solid #ccc;">
+          <span>
+            今月の総シフト数：<strong id="totalShiftsCount" style="font-size:18px;">0</strong> 回
+            <span style="font-size:11px; color:#888; margin-left:4px;">(平日 <span id="weekdayCount">0</span>日 × AM/PM)</span>
+          </span>
+          <span style="font-size:20px; color:#ccc;">｜</span>
+          <span>
+            目標設定の合計：<strong id="targetSumCount" style="font-size:18px;">0</strong> 回
+          </span>
+          <span style="font-size:20px; color:#ccc;">｜</span>
+          <span id="targetBalanceStatus" style="font-size:15px; font-weight:bold; padding:4px 12px; border-radius:20px; background:#eee; color:#666;">
+            －
+          </span>
+        </div>
+
         <div id="targetInputList" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
       </div>
     </div>
@@ -1681,6 +1698,77 @@ function renderTargetInputs() {
       <span class="target-badge">設定済</span>
     </div>`;
   }).join('');
+
+  updateTargetBalance();
+}
+
+function updateTargetBalance() {
+  // 今月の平日数（土日・祝日を除く）を計算
+  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+  let weekdays = 0;
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const date = new Date(currentYear, currentMonth - 1, day);
+    const dow = date.getDay();
+    const isWeekend = dow === 0 || dow === 6;
+    const isHoliday = holidays[dateStr] || customHolidays.includes(dateStr);
+    if (!isWeekend && !isHoliday) weekdays++;
+  }
+  const totalShifts = weekdays * 2; // AM + PM
+
+  // 目標設定の合計（空欄は0としてカウント）
+  const key = getCurrentMonthKey();
+  const targets = (monthlyTargets && monthlyTargets[key]) ? monthlyTargets[key] : {};
+  let targetSum = 0;
+  let anyTargetSet = false;
+  members.forEach(name => {
+    const t = targets[name];
+    if (t !== undefined && t !== null && t !== '') {
+      targetSum += parseInt(t, 10);
+      anyTargetSet = true;
+    }
+  });
+
+  // 表示更新
+  const totalEl = document.getElementById('totalShiftsCount');
+  const weekdayEl = document.getElementById('weekdayCount');
+  const sumEl = document.getElementById('targetSumCount');
+  const statusEl = document.getElementById('targetBalanceStatus');
+  const barEl = document.getElementById('targetBalanceBar');
+  if (!totalEl || !sumEl || !statusEl || !barEl) return;
+
+  totalEl.textContent = totalShifts;
+  if (weekdayEl) weekdayEl.textContent = weekdays;
+  sumEl.textContent = targetSum;
+
+  if (!anyTargetSet) {
+    statusEl.textContent = '目標未設定';
+    statusEl.style.background = '#eee';
+    statusEl.style.color = '#888';
+    barEl.style.borderColor = '#ccc';
+    barEl.style.background = 'white';
+  } else {
+    const diff = totalShifts - targetSum;
+    if (diff === 0) {
+      statusEl.textContent = '✅ ぴったり！';
+      statusEl.style.background = '#d4edda';
+      statusEl.style.color = '#155724';
+      barEl.style.borderColor = '#28a745';
+      barEl.style.background = '#f0fff4';
+    } else if (diff > 0) {
+      statusEl.textContent = `⚠️ あと ${diff} 回 足りない`;
+      statusEl.style.background = '#fff3cd';
+      statusEl.style.color = '#856404';
+      barEl.style.borderColor = '#ffc107';
+      barEl.style.background = '#fffdf0';
+    } else {
+      statusEl.textContent = `❗ ${Math.abs(diff)} 回 超過`;
+      statusEl.style.background = '#f8d7da';
+      statusEl.style.color = '#721c24';
+      barEl.style.borderColor = '#dc3545';
+      barEl.style.background = '#fff5f5';
+    }
+  }
 }
 
 window.setMemberTarget = async function(memberName, value) {
@@ -1698,7 +1786,9 @@ window.setMemberTarget = async function(memberName, value) {
     if (item) item.classList.add('has-target');
   }
 
-  // 自動保存（デバウンス）
+  // バランス表示をリアルタイム更新（保存は別途デバウンス）
+  updateTargetBalance();
+
   clearTimeout(window._targetSaveTimer);
   window._targetSaveTimer = setTimeout(async () => {
     await saveData();
