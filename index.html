@@ -405,14 +405,14 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
    ADMIN_EMAILS にメールを入れておくと、その人はパスワードなしで
    管理者メニューを開けます。
    ========================================================= */
-const ADMIN_PASSWORD = "jfcradmin";
+const ADMIN_PASSWORD = "111111";
 
 /* 新規登録を各自にやってもらう場合は true のまま。
    管理者がFirebaseで一人ずつ作る運用に戻すときは false にしてください。
    SIGNUP_CODE は新規登録のときだけ使う合言葉です。 */
 const ALLOW_SELF_SIGNUP = true;
 const SIGNUP_CODE       = "houkatsu";
-const ADMIN_EMAILS   = [];   // ここにメールを入れると、その人はパスワードなしで管理者になります（空でも可）
+const ADMIN_EMAILS   = ["kiyomi.nonogaki@jfcr.or.jp", "chisa.okawa@jfcr.or.jp"];   // ここにメールを入れると、その人はパスワードなしで管理者になります（空でも可）
 
 const firebaseConfig = {
   apiKey: "AIzaSyAkzXox90kJgOUcy3e35ZhCZLBwNLkF8OA",
