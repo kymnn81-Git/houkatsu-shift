@@ -3,916 +3,416 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>シフト希望管理システム</title>
+<title>包括同意シフト</title>
 <style>
-:root {
-  --color-good: #d4edda;
-  --color-ok: #fff3cd;
-  --color-bad: #e8e8e8;
-  --color-weekend: #e8e8e8;
-  --color-assigned: #fff3cd;
-  --border-color: #ccc;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
-  margin: 0;
-  padding: 10px;
-  background: #fafafa;
-  font-size: 14px;
-}
-
-.no-print {
-  display: block;
-}
-
-h1 {
-  font-size: 1.5rem;
-  margin: 0 0 10px;
-}
-
-.controls {
-  margin-bottom: 15px;
-  padding: 10px;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.controls button {
-  margin: 3px;
-  padding: 8px 12px;
-  font-size: 13px;
-  cursor: pointer;
-  border: 1px solid #007bff;
-  background: #007bff;
-  color: white;
-  border-radius: 3px;
-}
-
-.controls button:hover {
-  background: #0056b3;
-}
-
-.controls button.primary {
-  background: #28a745;
-  border-color: #28a745;
-}
-
-.controls button.primary:hover {
-  background: #218838;
-}
-
-.controls button.secondary {
-  background: #6c757d;
-  border-color: #6c757d;
-}
-
-.controls button.secondary:hover {
-  background: #545b62;
-}
-
-.controls button.danger {
-  background: #dc3545;
-  border-color: #dc3545;
-}
-
-.controls button.danger:hover {
-  background: #c82333;
-}
-
-.month-nav {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-}
-
-.month-nav h2 {
-  margin: 0;
-  font-size: 1.3rem;
-}
-
-.member-mgmt {
-  margin: 10px 0;
-}
-
-.member-input-group {
-  display: flex;
-  gap: 5px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-}
-
-.member-input-group input[type="text"] {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  font-size: 13px;
-  flex: 1;
-  min-width: 150px;
-}
-
-.member-input-group input[type="date"] {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  font-size: 13px;
-}
-
-.member-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 5px;
-}
-
-.member-item {
-  display: flex;
-  align-items: center;
-  background: #e9ecef;
-  padding: 5px 8px;
-  border-radius: 3px;
-  font-size: 12px;
-}
-
-.member-item button {
-  margin-left: 5px;
-  padding: 2px 6px;
-  font-size: 11px;
-  cursor: pointer;
-  border: none;
-  background: #dc3545;
-  color: white;
-  border-radius: 2px;
-  transition: background 0.2s;
-}
-
-.member-item button:hover {
-  background: #c82333;
-  transform: scale(1.1);
-}
-
-.totals-display {
-  margin: 10px 0;
-  padding: 10px;
-  background: #f8f9fa;
-  border-radius: 4px;
-  font-size: 12px;
-}
-
-.count-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  font-size: 13px;
-}
-
-.count-table th,
-.count-table td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: center;
-}
-
-.count-table th {
-  background: #007bff;
-  color: white;
-  font-weight: bold;
-  padding: 10px 8px;
-}
-
-.count-table thead tr:first-child th {
-  background: #007bff;
-}
-
-.count-table thead tr:last-child th:nth-child(1),
-.count-table thead tr:last-child th:nth-child(2),
-.count-table thead tr:last-child th:nth-child(3) {
-  background: #42a5f5;
-}
-
-.count-table thead tr:last-child th:nth-child(4),
-.count-table thead tr:last-child th:nth-child(5),
-.count-table thead tr:last-child th:nth-child(6) {
-  background: #1976d2;
-}
-
-.count-table tbody tr:nth-child(even) {
-  background: #f8f9fa;
-}
-
-.count-table tbody tr:hover {
-  background: #e9ecef;
-}
-
-.totals-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 8px;
-}
-
-.total-item {
-  padding: 5px;
-  background: white;
-  border-radius: 3px;
-  border: 1px solid #dee2e6;
-}
-
-.total-item strong {
-  color: #007bff;
-}
-
-.sync-status {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  padding: 5px 10px;
-  background: #28a745;
-  color: white;
-  border-radius: 3px;
-  font-size: 12px;
-  z-index: 1000;
-}
-
-.sync-status.syncing {
-  background: #ffc107;
-}
-
-.sync-status.error {
-  background: #dc3545;
-}
-
-.calendar-container {
-  overflow-x: auto;
-  overflow-y: auto;
-  margin: 15px 0;
-  max-height: 70vh;
-  position: relative;
-  border: 1px solid var(--border-color);
-}
-
-.calendar {
-  border-collapse: collapse;
-  width: 100%;
-  min-width: 700px;
-  background: white;
-  font-size: 13px;
-}
-
-.calendar th, .calendar td {
-  border: 1px solid var(--border-color);
-  padding: 4px;
-  text-align: center;
-  font-weight: normal;
-  vertical-align: middle;
-  min-width: 60px;
-}
-
-.calendar thead th {
-  position: sticky;
-  top: 0;
-  background: #007bff;
-  color: white;
-  z-index: 10;
-  font-weight: bold;
-}
-
-/* 日付列固定 */
-.calendar td:first-child,
-.calendar th:first-child {
-  position: sticky;
-  left: 0;
-  background: white;
-  z-index: 5;
-  font-weight: bold;
-  min-width: 35px;
-  max-width: 35px;
-  font-size: 11px;
-}
-
-.calendar td:first-child.weekend-bg {
-  background: #e8e8e8 !important;
-}
-
-.calendar thead th:first-child {
-  z-index: 11;
-  background: #007bff;
-}
-
-/* AM/PM列固定 */
-.calendar tbody td:nth-child(2) {
-  position: sticky;
-  left: 35px;
-  background: white;
-  z-index: 5;
-  font-weight: bold;
-  min-width: 30px;
-  max-width: 30px;
-  font-size: 11px;
-}
-
-/* PM時間セル（rowSpanのため、nth-child(1)になる） */
-.calendar tbody td.pm-time-cell {
-  position: sticky;
-  left: 35px;
-  background: white;
-  z-index: 5;
-  font-weight: bold;
-  min-width: 30px;
-  max-width: 30px;
-  font-size: 11px;
-}
-
-.calendar tbody td.pm-time-cell.weekend-bg {
-  background: #e8e8e8;
-}
-
-.calendar thead th:nth-child(2) {
-  position: sticky;
-  left: 35px;
-  z-index: 11;
-  background: #007bff;
-  min-width: 30px;
-  max-width: 30px;
-}
-
-/* 担当者列固定 */
-.calendar tbody td:nth-child(3) {
-  position: sticky;
-  left: 65px;
-  background: #ffe6f0;
-  z-index: 5;
-  font-weight: bold;
-  min-width: 70px;
-  font-size: 16px;
-}
-
-/* PM担当セル（rowSpanのため、nth-child(2)になる） */
-.calendar tbody td.pm-assigned-cell {
-  position: sticky;
-  left: 65px;
-  background: #ffe6f0;
-  z-index: 5;
-  font-weight: bold;
-  min-width: 70px;
-  font-size: 16px;
-}
-
-.calendar tbody td.pm-assigned-cell.weekend-bg {
-  background: #e8e8e8 !important;
-}
-
-.calendar thead th:nth-child(3) {
-  position: sticky;
-  left: 65px;
-  z-index: 11;
-  background: #007bff;
-  min-width: 70px;
-}
-
-/* 休日行の担当列 */
-.calendar tbody td:nth-child(3).weekend-bg {
-  background: #e8e8e8 !important;
-}
-
-/* バックアップ担当列固定 */
-.calendar tbody td:nth-child(4) {
-  position: sticky;
-  left: 135px;
-  background: #d0e8ff;
-  z-index: 5;
-  font-weight: bold;
-  min-width: 70px;
-  font-size: 16px;
-}
-
-/* PMバックアップ担当セル（rowSpanのため、nth-child(3)になる） */
-.calendar tbody td.pm-backup-assigned-cell {
-  position: sticky;
-  left: 135px;
-  background: #d0e8ff;
-  z-index: 5;
-  font-weight: bold;
-  min-width: 70px;
-  font-size: 16px;
-}
-
-.calendar tbody td.pm-backup-assigned-cell.weekend-bg {
-  background: #e8e8e8 !important;
-}
-
-.calendar thead th:nth-child(4) {
-  position: sticky;
-  left: 135px;
-  z-index: 11;
-  background: #007bff;
-  min-width: 70px;
-}
-
-/* 休日行のバックアップ担当列 */
-.calendar tbody td:nth-child(4).weekend-bg {
-  background: #e8e8e8 !important;
-}
-
-/* 5列目以降のシフトセルは通常のスタイル */
-.calendar tbody td:nth-child(n+5) {
-  position: static;
-  z-index: auto;
-  background: white !important;
-  font-weight: normal !important;
-}
-
-/* PM行のシフトセル */
-.calendar tbody td.pm-shift-cell {
-  position: static;
-  z-index: auto;
-  background: white !important;
-  font-weight: normal !important;
-}
-
-/* 担当セルのselect要素 */
-.assigned-cell {
-  background: #ffe6f0;
-}
-
-.assigned-cell select {
-  width: 100%;
-  padding: 4px 2px;
-  font-size: 14px;
-  border: 1px solid #ffb3d9;
-  border-radius: 3px;
-  background: #ffe6f0;
-}
-
-.assigned-cell.weekend-bg {
-  background: #e8e8e8 !important;
-}
-
-.assigned-cell.weekend-bg select {
-  background: #e8e8e8;
-  border-color: #ccc;
-}
-
-/* バックアップ担当セルのselect要素 */
-.backup-assigned-cell {
-  background: #d0e8ff;
-}
-
-.backup-assigned-cell select {
-  width: 100%;
-  padding: 4px 2px;
-  font-size: 14px;
-  border: 1px solid #99ccff;
-  border-radius: 3px;
-  background: white;
-}
-
-.backup-assigned-cell.weekend-bg {
-  background: #e8e8e8 !important;
-}
-
-.backup-assigned-cell.weekend-bg select {
-  background: #e8e8e8;
-  border-color: #ccc;
-}
-
-.assigned-cell select {
-  width: 100%;
-  padding: 4px 2px;
-  font-size: 14px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  background: white;
-  font-weight: bold;
-}
-
-.weekend-bg {
-  background-color: var(--color-weekend) !important;
-}
-
-.shift-cell {
-  padding: 8px 4px;
-  cursor: pointer;
-  transition: all 0.1s;
-  min-height: 35px;
-  user-select: none;
-  font-weight: normal !important;
-  background: white;
-}
-
-.pm-shift-cell {
-  font-weight: normal !important;
-}
-
-.shift-cell:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 0 2px #007bff;
-  z-index: 1;
-}
-
-.shift-cell:active {
-  transform: scale(0.95);
-}
-
-/* 平日のシフトセル色 - 最高優先順位 */
-table.calendar tbody td.shift-cell.good,
-table.calendar tbody td.pm-shift-cell.good {
-  background-color: #d4edda !important;
-}
-
-table.calendar tbody td.shift-cell.ok,
-table.calendar tbody td.pm-shift-cell.ok {
-  background-color: #fff3cd !important;
-}
-
-table.calendar tbody td.shift-cell.bad,
-table.calendar tbody td.pm-shift-cell.bad {
-  background-color: #e8e8e8 !important;
-}
-
-/* 休日のシフトセル - 全てグレー（記号に関係なく） */
-table.calendar tbody td.shift-cell.weekend-bg,
-table.calendar tbody td.pm-shift-cell.weekend-bg {
-  background-color: #e8e8e8 !important;
-}
-
-.assigned-cell select {
-  width: 100%;
-  padding: 4px 2px;
-  font-size: 14px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  background: white;
-  font-weight: bold;
-}
-
-.login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.login-box {
-  background: white;
-  padding: 40px;
-  border-radius: 10px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-  width: 100%;
-  max-width: 400px;
-}
-
-.login-box h1 {
-  text-align: center;
-  color: #333;
-  margin-bottom: 30px;
-}
-
-.login-box input {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 20px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 14px;
-}
-
-.login-box button {
-  width: 100%;
-  padding: 12px;
-  background: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-.login-box button:hover {
-  background: #0056b3;
-}
-
-.error-message {
-  color: #dc3545;
-  text-align: center;
-  margin-top: 10px;
-  font-size: 14px;
-}
-
-@media print {
-  body {
-    background: white;
-    padding: 0;
+  :root{
+    --ink:#1f2933;
+    --ink-soft:#5a6672;
+    --line:#d9e0e7;
+    --bg:#f4f6f8;
+    --panel:#ffffff;
+    --brand:#1565c0;
+    --brand-dark:#0d47a1;
+    --ok:#2e7d32;
+    --ok-bg:#e3f4e5;
+    --maybe:#b26a00;
+    --maybe-bg:#fdf1d8;
+    --no:#7a828a;
+    --no-bg:#eceff1;
+    --sat:#eaf3fb;
+    --sun:#fdeeee;
+    --admin:#6a1b9a;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",sans-serif;
+    font-size:14px; line-height:1.6;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:16px}
+
+  /* ---------- ログイン ---------- */
+  #loginScreen{
+    position:fixed;inset:0;background:var(--bg);
+    display:flex;align-items:center;justify-content:center;padding:20px;z-index:100;
+  }
+  .login-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:32px;width:100%;max-width:380px;box-shadow:0 2px 12px rgba(0,0,0,.06);
+  }
+  .login-card h1{font-size:20px;margin:0 0 4px}
+  .login-card p.sub{color:var(--ink-soft);font-size:13px;margin:0 0 22px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:4px}
+  .field input{
+    width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:6px;font-size:15px;
+  }
+  .field input:focus{outline:2px solid var(--brand);outline-offset:-1px;border-color:var(--brand)}
+  .err{color:#c62828;font-size:13px;margin-top:10px;min-height:20px}
+  .linkbtn{border:none;background:none;color:var(--brand);text-decoration:underline;padding:4px;font-size:13px}
+  .linkbtn:hover{background:none;color:var(--brand-dark)}
+
+  /* ---------- ボタン ---------- */
+  button{
+    font-family:inherit;font-size:13px;padding:7px 13px;border-radius:6px;
+    border:1px solid var(--line);background:var(--panel);color:var(--ink);
+    cursor:pointer;transition:background .12s,border-color .12s;
+  }
+  button:hover{background:#eef2f5}
+  button:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  button.primary:hover{background:var(--brand-dark)}
+  button.wide{width:100%;padding:11px;font-size:15px}
+  button.danger{color:#c62828;border-color:#f0c4c4}
+  button.danger:hover{background:#fdeeee}
+  button.adminbtn{background:var(--admin);border-color:var(--admin);color:#fff}
+  button.adminbtn:hover{background:#4a148c}
+  button:disabled{opacity:.45;cursor:not-allowed}
+
+  /* ---------- ヘッダー ---------- */
+  header.bar{
+    background:var(--panel);border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:40;
+  }
+  .bar-inner{max-width:1180px;margin:0 auto;padding:10px 16px;
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .bar h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.02em}
+  .whoami{font-size:12px;color:var(--ink-soft);margin-left:auto;text-align:right}
+  .whoami strong{color:var(--ink);font-size:13px}
+  .badge-admin{
+    display:inline-block;background:var(--admin);color:#fff;font-size:11px;
+    padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:1px;
   }
 
-  .no-print {
-    display: none !important;
+  /* ---------- タブ ---------- */
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
+  .tab{
+    padding:9px 16px;border:1px solid transparent;border-bottom:none;background:none;
+    border-radius:6px 6px 0 0;margin-bottom:-1px;color:var(--ink-soft);font-weight:600;
   }
+  .tab.active{background:var(--panel);border-color:var(--line);color:var(--brand);}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:16px}
+  .panel h2{font-size:14px;margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .panel h3{font-size:13px;margin:18px 0 8px;color:var(--ink-soft)}
 
-  .calendar-container {
-    overflow: visible;
-    max-height: none;
-    border: none;
+  /* ---------- 月ナビ ---------- */
+  .navrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .navrow .month{font-size:19px;font-weight:700;min-width:150px;text-align:center}
+  select{padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:inherit;background:#fff}
+
+  /* ---------- カレンダー ---------- */
+  .cal{width:100%;border-collapse:collapse;table-layout:fixed}
+  .cal th{
+    background:#eef2f6;border:1px solid var(--line);padding:8px 2px;
+    font-size:14px;font-weight:700;color:var(--ink-soft);
   }
-
-  .calendar {
-    font-size: 10px;
+  .cal th.sat{color:#1565c0}
+  .cal th.sun{color:#c62828}
+  .cal td{border:1px solid var(--line);vertical-align:top;height:104px;padding:0;background:#fff}
+  .cal td.blank{background:#fafbfc}
+  .cal td.sat{background:var(--sat)}
+  .cal td.sun,.cal td.hol{background:var(--sun)}
+  .daynum{font-size:15px;font-weight:700;padding:4px 6px 2px;display:flex;justify-content:space-between;align-items:baseline}
+  .holname{font-size:11px;color:#c62828;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:66%}
+  .slots{padding:0 4px 4px}
+  .slot{
+    display:flex;align-items:center;gap:6px;margin-top:4px;
+    border:1px solid var(--line);border-radius:5px;background:#fff;
+    padding:3px 5px;cursor:pointer;user-select:none;
   }
+  .slot:hover{border-color:var(--brand)}
+  .slot .lbl{font-size:13px;color:var(--ink-soft);font-weight:700;width:26px;flex:none}
+  .slot .mark{font-size:21px;font-weight:700;flex:1;text-align:center;line-height:1.2}
+  .slot.m-o{background:var(--ok-bg);border-color:#a8d5ae}
+  .slot.m-o .mark{color:var(--ok)}
+  .slot.m-x{background:var(--no-bg);border-color:#c8ced3}
+  .slot.m-x .mark{color:var(--no)}
+  .slot.locked{cursor:default;opacity:.55}
+  .slot.locked:hover{border-color:var(--line)}
 
-  .calendar th, .calendar td {
-    padding: 2px;
-    min-width: auto;
+  /* 担当表カレンダー */
+  .assign-line{font-size:14px;padding:3px 5px;display:flex;gap:6px;align-items:baseline}
+  .assign-line .lbl{color:var(--ink-soft);font-weight:700;width:30px;flex:none;font-size:12px}
+  .assign-line .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .assign-line.bu{font-size:11px;padding:1px 5px 2px}
+  .assign-line.bu .lbl{font-size:10px;width:26px}
+  .assign-line.bu .nm{font-weight:400;color:var(--ink-soft)}
+  .assign-line.me{background:#fff8dc;border-radius:3px}
+  .assign-line.me .nm{color:#8a6d00}
+
+  /* ---------- 表 ---------- */
+  .tblwrap{overflow-x:auto}
+  table.data{border-collapse:collapse;width:100%;font-size:13px}
+  table.data th,table.data td{border:1px solid var(--line);padding:5px 8px;text-align:center}
+  table.data th{background:#eef2f6;font-weight:700;font-size:12px;color:var(--ink-soft);position:sticky;top:0}
+  table.data td.name{text-align:left;font-weight:600;white-space:nowrap;background:#fafbfc}
+  table.data td.goal{color:var(--ink-soft);font-size:12px}
+  table.data td.ok{background:#eef7ef}
+  table.data td.warn{background:#fdf1d8;font-weight:700;color:#b26a00}
+  table.data tr:hover td{background:#f7f9fb}
+  table.data td.sum{font-weight:700;background:#e8f1fa}
+
+  .mark-o{color:var(--ok);font-weight:700}
+  .mark-x{color:var(--no)}
+
+  .hint{font-size:12px;color:var(--ink-soft);margin:6px 0 0}
+  .btnrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .status{font-size:12px;color:var(--ink-soft);margin-left:8px}
+  .status.saving{color:var(--maybe)}
+  .status.error{color:#c62828}
+
+  .locked-note{
+    background:#fdf1d8;border:1px solid #e6c98a;border-radius:6px;
+    padding:10px 12px;font-size:13px;margin-bottom:12px;
   }
+  .empty{color:var(--ink-soft);font-size:13px;padding:18px 0;text-align:center}
 
-  .calendar th,
-  .calendar td {
-    position: static !important;
+  .chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);
+    border-radius:14px;padding:3px 7px;font-size:12px;margin:0 5px 5px 0;background:#fff}
+  .chip .nm{font-weight:600;padding:0 3px}
+  .chip button{border:none;background:none;color:#c62828;padding:0 4px;font-size:14px;line-height:1}
+  .chip button.ord{color:var(--brand);font-size:11px;padding:0 1px;line-height:1}
+  .chip button.ord:disabled{color:#c8ced3;cursor:default}
+  .chip button.ord:hover:not(:disabled){background:#eef2f5;border-radius:3px}
+
+  @media print{
+    .no-print{display:none !important}
+    body{background:#fff}
+    .panel{border:none;padding:0}
   }
-
-  .sync-status {
-    display: none;
+  @media (max-width:640px){
+    .cal td{height:88px}
+    .cal th{font-size:12px}
+    .daynum{font-size:13px;padding:3px 4px 1px}
+    .slot{padding:2px 3px;gap:3px}
+    .slot .lbl{font-size:11px;width:22px}
+    .slot .mark{font-size:18px}
+    .assign-line{font-size:12px;padding:2px 3px}
+    .assign-line .lbl{width:26px;font-size:11px}
+    .assign-line.bu{font-size:10px}
+    .assign-line.bu .lbl{font-size:9px;width:22px}
+    .wrap{padding:10px}
   }
-}
-
-@media (max-width: 768px) {
-  .calendar {
-    font-size: 11px;
-  }
-  
-  .calendar th, .calendar td {
-    padding: 3px;
-    min-width: 50px;
-  }
-
-  .controls button {
-    font-size: 12px;
-    padding: 6px 10px;
-  }
-}
-
-/* 個人別目標回数入力 */
-.target-input-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: white;
-  border: 1px solid #c8d8ff;
-  border-radius: 4px;
-  padding: 5px 8px;
-  font-size: 13px;
-}
-
-.target-input-item .target-name {
-  font-weight: bold;
-  min-width: 40px;
-}
-
-.target-input-item input[type="number"] {
-  width: 52px;
-  text-align: center;
-  padding: 3px 4px;
-  border: 1px solid #aac;
-  border-radius: 3px;
-  font-size: 13px;
-}
-
-.target-input-item .target-unit {
-  font-size: 11px;
-  color: #888;
-}
-
-.target-input-item .target-badge {
-  background: #4a90e2;
-  color: white;
-  border-radius: 10px;
-  padding: 1px 6px;
-  font-size: 10px;
-  display: none;
-}
-
-.target-input-item.has-target .target-badge {
-  display: inline;
-}
-
-/* === 最優先色設定（最後に記述） === */
-/* 5列目以降のメンバー列 - 確実に白背景 */
-table.calendar tbody tr td:nth-child(n+5) {
-  background-color: white !important;
-}
-
-/* 5列目以降 - ○△×がない場合は白 */
-table.calendar tbody tr td:nth-child(n+5):not(.good):not(.ok):not(.bad):not(.weekend-bg) {
-  background-color: white !important;
-}
-
-/* PM行の5列目以降のメンバー列 - 確実に白背景 */
-table.calendar tbody tr td.pm-shift-cell {
-  background-color: white !important;
-}
-
-table.calendar tbody tr td.pm-shift-cell:not(.good):not(.ok):not(.bad):not(.weekend-bg) {
-  background-color: white !important;
-}
-
-/* 平日 - ○：緑色 */
-table.calendar tbody tr td.shift-cell.good:not(.weekend-bg),
-table.calendar tbody tr td.pm-shift-cell.good:not(.weekend-bg),
-table.calendar tbody tr td:nth-child(n+5).good:not(.weekend-bg) {
-  background-color: #d4edda !important;
-}
-
-/* 平日 - △：黄色 */
-table.calendar tbody tr td.shift-cell.ok:not(.weekend-bg),
-table.calendar tbody tr td.pm-shift-cell.ok:not(.weekend-bg),
-table.calendar tbody tr td:nth-child(n+5).ok:not(.weekend-bg) {
-  background-color: #fff3cd !important;
-}
-
-/* 平日 - ×：グレー */
-table.calendar tbody tr td.shift-cell.bad:not(.weekend-bg),
-table.calendar tbody tr td.pm-shift-cell.bad:not(.weekend-bg),
-table.calendar tbody tr td:nth-child(n+5).bad:not(.weekend-bg) {
-  background-color: #e8e8e8 !important;
-}
-
-/* 休日 - 全列グレー（記号に関係なく、最優先） */
-table.calendar tbody tr td.weekend-bg {
-  background-color: #e8e8e8 !important;
-}
-
-table.calendar tbody tr td:nth-child(n+5).weekend-bg,
-table.calendar tbody tr td.shift-cell.weekend-bg,
-table.calendar tbody tr td.pm-shift-cell.weekend-bg {
-  background-color: #e8e8e8 !important;
-}
-
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
 </style>
 </head>
 <body>
 
-<div id="loginScreen" class="login-container">
-  <div class="login-box">
-    <h1>🗓️ シフト管理システム</h1>
-    <p style="color: #666; margin-bottom: 20px;">登録されたメールアドレスでログインしてください</p>
-    <input type="email" id="emailInput" placeholder="メールアドレス" style="margin-bottom: 10px;">
-    <input type="password" id="passwordInput" placeholder="パスワード" onkeypress="if(event.key==='Enter') loginWithEmail()">
-    <button onclick="loginWithEmail()">ログイン</button>
-    <div id="loginError" class="error-message"></div>
+<!-- ===================== ログイン ===================== -->
+<div id="loginScreen">
+  <div class="login-card">
+    <h1>包括同意シフト</h1>
+    <p class="sub">登録済みのメールアドレスでログインしてください。</p>
+    <div class="field">
+      <label for="emailInput">メールアドレス</label>
+      <input type="email" id="emailInput" autocomplete="username" placeholder="name@example.com">
+    </div>
+    <div class="field">
+      <label for="passwordInput">パスワード</label>
+      <input type="password" id="passwordInput" autocomplete="current-password">
+    </div>
+    <button class="primary wide" onclick="loginWithEmail()">ログイン</button>
+    <div style="text-align:center;margin-top:12px">
+      <button onclick="resetPassword()" class="linkbtn">パスワードを忘れたとき</button>
+    </div>
+    <div class="err" id="loginError"></div>
+    <div id="toSignup" style="border-top:1px solid var(--line);margin-top:18px;padding-top:14px;text-align:center">
+      <span style="font-size:13px;color:var(--ink-soft)">はじめて使う方は</span>
+      <button onclick="showSignup(true)" class="linkbtn">アカウントを作る</button>
+    </div>
+  </div>
+
+  <div class="login-card" id="signupCard" style="display:none">
+    <h1>アカウントを作る</h1>
+    <p class="sub">ご自身のメールアドレスで登録してください。</p>
+    <div class="field">
+      <label for="suCode">合言葉</label>
+      <input type="text" id="suCode" placeholder="担当者から伝えられた合言葉">
+    </div>
+    <div class="field">
+      <label for="suEmail">メールアドレス</label>
+      <input type="email" id="suEmail" autocomplete="username" placeholder="name@example.com">
+    </div>
+    <div class="field">
+      <label for="suPw">パスワード（6文字以上・ご自身で決めてください）</label>
+      <input type="password" id="suPw" autocomplete="new-password">
+    </div>
+    <div class="field">
+      <label for="suPw2">パスワード（確認）</label>
+      <input type="password" id="suPw2" autocomplete="new-password">
+    </div>
+    <button class="primary wide" onclick="signUp()">登録してはじめる</button>
+    <div class="err" id="signupError"></div>
+    <div style="text-align:center;margin-top:14px">
+      <button onclick="showSignup(false)" class="linkbtn">ログイン画面に戻る</button>
+    </div>
   </div>
 </div>
 
-<div id="mainScreen" style="display: none;">
-  <div class="no-print">
-    <h1>📋 包括同意シフト</h1>
-    
-    <div id="syncStatus" class="sync-status">✓ 同期済み</div>
+<!-- ===================== メイン ===================== -->
+<div id="mainScreen" style="display:none">
 
-    <div class="controls">
-      <div class="month-nav">
-        <div style="margin-bottom: 10px;">
-          <label for="fiscalYearSelect" style="font-weight: bold; margin-right: 10px;">年度:</label>
-          <select id="fiscalYearSelect" onchange="changeFiscalYear()" style="font-size: 16px; padding: 5px 10px; border-radius: 5px; border: 1px solid #ddd;">
-            <option value="2025">2025年度（2025/4〜2026/3）</option>
-            <option value="2026">2026年度（2026/4〜2027/3）</option>
-            <option value="2027">2027年度（2027/4〜2028/3）</option>
-            <option value="2028">2028年度（2028/4〜2029/3）</option>
-            <option value="2029">2029年度（2029/4〜2030/3）</option>
-            <option value="2030">2030年度（2030/4〜2031/3）</option>
-          </select>
-        </div>
-        <button onclick="changeMonth(-1)">◀前月</button>
-        <button onclick="changeMonth(0)">今月</button>
-        <button onclick="changeMonth(1)">次月▶</button>
-        <h2 id="currentMonth"></h2>
-        <button onclick="logout()" class="danger">ログアウト</button>
+  <header class="bar no-print">
+    <div class="bar-inner">
+      <h1>包括同意シフト</h1>
+      <select id="fySelect" onchange="changeFiscalYear()"></select>
+      <button onclick="openAdmin()" id="adminEntryBtn">管理者メニュー</button>
+      <div class="whoami">
+        <div><strong id="myNameLabel">—</strong><span id="adminBadge"></span></div>
+        <div id="myEmailLabel"></div>
       </div>
-
-      <div style="margin-top: 10px;">
-        <button onclick="manualSave()" class="primary">💾 保存</button>
-        <button onclick="autoAssign()">🎯 未割当を自動割り振り（今月）</button>
-        <button onclick="copyScheduleToClipboard()" class="secondary">📧 担当表をコピー</button>
-        <button onclick="window.print()" class="secondary">🖨️ 印刷</button>
-        <button onclick="migrateTo2025()" class="primary" style="background: #28a745;">🔄 既存データを2025年度に移行</button>
-        <button onclick="resetData()" class="danger">🗑️ データリセット</button>
-      </div>
-
-      <!-- 月間個人別目標回数設定 -->
-      <div id="targetSettingArea" style="margin-top:12px; padding:10px; background:#f0f4ff; border:1px solid #b0c4ff; border-radius:6px;">
-        <div style="font-weight:bold; margin-bottom:8px;">
-          📋 個人別目標回数（今月）
-          <span style="font-weight:normal; font-size:12px; color:#666; margin-left:10px;">
-            ※数字を入力→その回数まで割り振り　空欄→制限なし（均等）　0→割り振らない
-          </span>
-        </div>
-
-        <!-- 合計バランス表示 -->
-        <div id="targetBalanceBar" style="margin-bottom:10px; padding:10px 14px; border-radius:6px; font-size:14px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; background:white; border:2px solid #ccc;">
-          <span>
-            今月の総シフト数：<strong id="totalShiftsCount" style="font-size:18px;">0</strong> 回
-            <span style="font-size:11px; color:#888; margin-left:4px;">(平日 <span id="weekdayCount">0</span>日 × AM/PM)</span>
-          </span>
-          <span style="font-size:20px; color:#ccc;">｜</span>
-          <span>
-            目標設定の合計：<strong id="targetSumCount" style="font-size:18px;">0</strong> 回
-          </span>
-          <span style="font-size:20px; color:#ccc;">｜</span>
-          <span id="targetBalanceStatus" style="font-size:15px; font-weight:bold; padding:4px 12px; border-radius:20px; background:#eee; color:#666;">
-            －
-          </span>
-        </div>
-
-        <div id="targetInputList" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
-      </div>
+      <button onclick="changePassword()">パスワード変更</button>
+      <button onclick="logout()">ログアウト</button>
     </div>
-  </div>
+  </header>
 
-  <div class="no-print" style="text-align: right; margin: 10px 20px 5px; font-size: 13px; color: #555;">
-    <strong>【記号の意味】</strong>
-    <span style="margin-left: 15px; color: #155724; font-weight: bold;">○ 可</span>
-    <span style="margin-left: 15px; color: #856404; font-weight: bold;">△ バックアップ可</span>
-    <span style="margin-left: 15px; color: #721c24; font-weight: bold;">× 不可</span>
-  </div>
-
-  <div class="calendar-container">
-    <table class="calendar" id="calendar">
-      <thead>
-        <tr id="headerRow">
-          <th>日付</th>
-          <th>時間</th>
-          <th>担当</th>
-        </tr>
-      </thead>
-      <tbody id="calendarBody">
-      </tbody>
-    </table>
-  </div>
-
-  <div class="no-print" style="text-align: center; margin: 10px 0; color: #666; font-size: 12px;">
-    データはFirebaseでリアルタイム同期されます
-  </div>
-
-  <div class="no-print">
-    <div class="totals-display">
-      <strong>📊 月間・累計カウント：</strong>
-      <div style="overflow-x: auto; margin-top: 10px;">
-        <table id="countTable" class="count-table">
-          <thead>
-            <tr>
-              <th rowspan="2">メンバー</th>
-              <th colspan="4">今月</th>
-              <th rowspan="2" style="background:#7986cb;">目標</th>
-              <th colspan="4">累計</th>
-            </tr>
-            <tr>
-              <th>AM</th>
-              <th>PM</th>
-              <th>合計</th>
-              <th>バックアップ</th>
-              <th>AM</th>
-              <th>PM</th>
-              <th>合計</th>
-              <th>バックアップ</th>
-            </tr>
-          </thead>
-          <tbody id="countTableBody"></tbody>
-        </table>
-      </div>
+  <div class="wrap">
+    <div class="tabs no-print">
+      <button class="tab active" data-tab="input" onclick="switchTab('input')">希望を入力</button>
+      <button class="tab" data-tab="schedule" onclick="switchTab('schedule')">確定した担当表</button>
+      <button class="tab" data-tab="admin" onclick="switchTab('admin')" id="adminTab" style="display:none">管理</button>
     </div>
 
-    <div class="controls">
-      <div class="member-mgmt">
-        <strong>メンバー管理：</strong>
-        <div class="member-input-group">
-          <input type="text" id="newMemberName" placeholder="新しいメンバー名" onkeypress="if(event.key==='Enter') addMember()">
-          <button onclick="addMember()">メンバー追加</button>
-          <button onclick="showDeleteMemberDialog()" class="danger">メンバー削除</button>
+    <div class="navrow no-print">
+      <button onclick="changeMonth(-1)">前の月</button>
+      <div class="month" id="monthLabel"></div>
+      <button onclick="changeMonth(1)">次の月</button>
+      <button onclick="goToday()">今月</button>
+      <span class="status" id="syncStatus"></span>
+    </div>
+
+    <!-- ---------- タブ1：希望入力 ---------- -->
+    <section id="tab-input">
+      <div class="panel">
+        <h2>自分のシフト希望</h2>
+        <div id="lockNote" class="locked-note" style="display:none"></div>
+        <div class="btnrow no-print" style="margin-bottom:12px">
+          <button onclick="bulkFill('○')">すべて ○</button>
+          <button onclick="bulkFill('×')">すべて ×</button>
+          <button onclick="bulkFill('')">この月をクリア</button>
+          <span class="hint" style="margin:0">AM／PMの欄をクリックすると ○ → × → 空欄 と切り替わります</span>
         </div>
-        <div id="memberList" class="member-list"></div>
+        <div class="tblwrap"><table class="cal" id="myCalendar"></table></div>
+        <p class="hint">
+          <span class="mark-o">○</span> 可 ／ <span class="mark-x">×</span> 不可 ／ 空欄 未回答
+          — 入力するとその場で保存されます。
+        </p>
       </div>
 
-      <div class="member-mgmt">
-        <strong>休日管理：</strong>
-        <div class="member-input-group">
-          <input type="date" id="newHolidayDate">
-          <button onclick="addCustomHoliday()">休日追加</button>
-        </div>
-        <div id="holidayList" class="member-list"></div>
+      <div class="panel">
+        <h2>自分の担当回数</h2>
+        <div class="tblwrap"><table class="data" id="myCountTable"></table></div>
       </div>
-    </div>
+    </section>
+
+    <!-- ---------- タブ2：確定した担当表 ---------- -->
+    <section id="tab-schedule" style="display:none">
+      <div class="panel">
+        <h2>確定した担当表</h2>
+        <div class="btnrow no-print" style="margin-bottom:12px">
+          <button onclick="copySchedule()">担当表をコピー</button>
+          <button onclick="window.print()">印刷</button>
+        </div>
+        <div class="tblwrap"><table class="cal" id="scheduleCalendar"></table></div>
+        <p class="hint">黄色の網掛けが自分の担当です。BU＝バックアップ担当。</p>
+      </div>
+    </section>
+
+    <!-- ---------- タブ3：管理 ---------- -->
+    <section id="tab-admin" style="display:none">
+
+      <div class="panel">
+        <h2>担当の割り振り</h2>
+        <div class="btnrow">
+          <button class="adminbtn" onclick="runAutoAssign()">この月を自動で割り振る</button>
+          <button onclick="clearAssignments()" class="danger">この月の割り振りを取り消す</button>
+        </div>
+        <p class="hint" id="assignResult">未割り当ての枠だけを埋めます。すでに手で入れた担当はそのまま残ります。</p>
+      </div>
+
+      <div class="panel">
+        <h2>この月の目標回数</h2>
+        <div id="targetEditor"></div>
+        <div id="targetCheck" class="hint"></div>
+      </div>
+
+      <div class="panel">
+        <h2>担当回数（目標と実績）</h2>
+        <label style="font-size:13px;display:inline-block;margin-bottom:10px">
+          <input type="checkbox" id="showRetired" onchange="renderCountTable()"> 退職者の記録も表示する
+        </label>
+        <div class="tblwrap"><table class="data" id="countTable"></table></div>
+        <p class="hint">目標は「その月の枠数 ÷ 人数」から計算した範囲です。目標から外れた欄は色がつきます。</p>
+      </div>
+
+      <div class="panel">
+        <h2>全員の希望一覧</h2>
+        <div class="tblwrap"><table class="data" id="matrixTable"></table></div>
+      </div>
+
+      <div class="panel">
+        <h2>担当を手で変更する</h2>
+        <div class="tblwrap"><table class="data" id="manualTable"></table></div>
+      </div>
+
+      <div class="panel">
+        <h2>メンバー</h2>
+        <div id="memberChips" style="margin-bottom:10px"></div>
+        <div id="retiredBox"></div>
+        <div class="btnrow">
+          <input type="text" id="newMemberInput" placeholder="名前" style="padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:inherit">
+          <button onclick="addMember()">追加</button>
+          <button onclick="copyMembersFromPrevYear()">前年度からメンバーを引き継ぐ</button>
+        </div>
+        <h3>メールアドレスと名前の対応</h3>
+        <div class="tblwrap"><table class="data" id="userMapTable"></table></div>
+        <p class="hint">各自が初回ログイン時に自分で名前を選んで登録します。ここは確認と、間違って登録された場合の修正に使ってください。</p>
+      </div>
+
+      <div class="panel">
+        <h2>休日の追加・削除</h2>
+        <p class="hint" style="margin-top:0">土日と祝日は自動で除外されます。ここでは年末年始や病院独自の休診日を追加してください。</p>
+        <div class="btnrow" style="margin-bottom:10px">
+          <input type="date" id="holidayInput" style="padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:inherit">
+          <button onclick="addHoliday()">休日として追加</button>
+        </div>
+        <div id="holidayChips"></div>
+      </div>
+
+      <div class="panel">
+        <h2>データの管理</h2>
+        <div class="btnrow">
+          <button onclick="migrateToFY()">古い形式のデータを2025年度に移す</button>
+          <button class="danger" onclick="resetYearData()">この年度のデータをすべて消す</button>
+        </div>
+        <p class="hint">「古い形式のデータを移す」は、年度分けを導入する前のデータが残っている場合に一度だけ実行してください。</p>
+      </div>
+    </section>
   </div>
 </div>
 
 <script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getDatabase, ref, set, get, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, set, get, onValue, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+         onAuthStateChanged, signOut, sendPasswordResetEmail, updatePassword,
+         EmailAuthProvider, reauthenticateWithCredential } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+/* =========================================================
+   設定
+   ---------------------------------------------------------
+   ADMIN_PASSWORD を変えると管理者パスワードが変わります。
+   ADMIN_EMAILS にメールを入れておくと、その人はパスワードなしで
+   管理者メニューを開けます。
+   ========================================================= */
+const ADMIN_PASSWORD = "jfcradmin";
+
+/* 新規登録を各自にやってもらう場合は true のまま。
+   管理者がFirebaseで一人ずつ作る運用に戻すときは false にしてください。
+   SIGNUP_CODE は新規登録のときだけ使う合言葉です。 */
+const ALLOW_SELF_SIGNUP = true;
+const SIGNUP_CODE       = "houkatsu";
+const ADMIN_EMAILS   = [];   // ここにメールを入れると、その人はパスワードなしで管理者になります（空でも可）
 
 const firebaseConfig = {
   apiKey: "AIzaSyAkzXox90kJgOUcy3e35ZhCZLBwNLkF8OA",
@@ -925,1432 +425,1300 @@ const firebaseConfig = {
   measurementId: "G-52Z070XLD6"
 };
 
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
-const firebaseAuth = getAuth(app);
-console.log('✅ Firebase初期化完了');
+const app  = initializeApp(firebaseConfig);
+const db   = getDatabase(app);
+const auth = getAuth(app);
 
-// メール/パスワードでログイン
-window.loginWithEmail = async function() {
-  const email = document.getElementById('emailInput').value;
-  const password = document.getElementById('passwordInput').value;
-  const errorDiv = document.getElementById('loginError');
-  
-  if (!email || !password) {
-    errorDiv.textContent = 'メールアドレスとパスワードを入力してください';
-    return;
-  }
-  
-  try {
-    await signInWithEmailAndPassword(firebaseAuth, email, password);
-    console.log('✅ ログイン成功');
-    errorDiv.textContent = '';
-  } catch (error) {
-    console.error('❌ ログインエラー:', error);
-    if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-      errorDiv.textContent = 'メールアドレスまたはパスワードが正しくありません';
-    } else if (error.code === 'auth/invalid-email') {
-      errorDiv.textContent = 'メールアドレスの形式が正しくありません';
-    } else {
-      errorDiv.textContent = 'ログインに失敗しました: ' + error.message;
+/* ===================== 状態 ===================== */
+const FY_LIST = [2025,2026,2027,2028,2029,2030];
+const today = new Date();
+
+let currentFY    = fiscalYearOf(today.getFullYear(), today.getMonth()+1);
+if (!FY_LIST.includes(currentFY)) currentFY = FY_LIST[0];
+let viewYear     = today.getFullYear();
+let viewMonth    = today.getMonth()+1;
+
+let members = [];
+let shiftData = {};          // "YYYY-MM-DD_名前_am" : "○"
+let assignedData = {};       // "YYYY-MM-DD_am" : "名前"
+let backupAssignedData = {}; // "YYYY-MM-DD_am" : "名前"
+let userMap = {};            // "name,at,example,com" : "名前"
+let customHolidays = [];
+let retired = [];          // 退職者。一覧からは外すが、過去の記録は残す
+let targets = {};          // "YYYY-MM": {mode, total:{min,max}, backup:{min,max}, per:{名前:{...}}}
+
+let myEmail = "";
+let myName  = "";
+let isAdmin = false;
+let activeTab = "input";
+let unsubscribe = null;
+let saveTimer = null;
+let localDirty = false;   // 自分の編集を保存中はリモート反映を止める
+
+function fiscalYearOf(y,m){ return m >= 4 ? y : y-1; }
+function emailKey(e){ return e.replace(/[.#$/\[\]]/g, ","); }
+
+/* ===================== 祝日 ===================== */
+const holidayCache = {};
+function jpHolidays(year){
+  if (holidayCache[year]) return holidayCache[year];
+  const h = {};
+  const p = n => String(n).padStart(2,"0");
+  const put = (m,d,name)=>{ h[`${year}-${p(m)}-${p(d)}`] = name; };
+  const nthMonday = (m,n)=>{
+    const first = new Date(year,m-1,1).getDay();
+    return 1 + ((8-first)%7) + (n-1)*7;
+  };
+  put(1,1,"元日");
+  put(1,nthMonday(1,2),"成人の日");
+  put(2,11,"建国記念の日");
+  put(2,23,"天皇誕生日");
+  const shunbun = Math.floor(20.8431 + 0.242194*(year-1980) - Math.floor((year-1980)/4));
+  put(3,shunbun,"春分の日");
+  put(4,29,"昭和の日");
+  put(5,3,"憲法記念日");
+  put(5,4,"みどりの日");
+  put(5,5,"こどもの日");
+  put(7,nthMonday(7,3),"海の日");
+  put(8,11,"山の日");
+  const keiro = nthMonday(9,3);
+  put(9,keiro,"敬老の日");
+  const shubun = Math.floor(23.2488 + 0.242194*(year-1980) - Math.floor((year-1980)/4));
+  put(9,shubun,"秋分の日");
+  if (shubun - keiro === 2) put(9,keiro+1,"国民の休日");
+  put(10,nthMonday(10,2),"スポーツの日");
+  put(11,3,"文化の日");
+  put(11,23,"勤労感謝の日");
+  // 振替休日
+  Object.keys(h).sort().forEach(k=>{
+    const d = new Date(k+"T00:00:00");
+    if (d.getDay() === 0){
+      let n = new Date(d); 
+      do { n.setDate(n.getDate()+1); } while (h[fmt(n)]);
+      h[fmt(n)] = "振替休日";
     }
+  });
+  holidayCache[year] = h;
+  return h;
+}
+function fmt(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+function holidayName(dateStr){
+  const y = Number(dateStr.slice(0,4));
+  return jpHolidays(y)[dateStr] || (customHolidays.includes(dateStr) ? "休日" : null);
+}
+function isWorkday(dateStr){
+  const d = new Date(dateStr+"T00:00:00");
+  const w = d.getDay();
+  if (w === 0 || w === 6) return false;
+  return !holidayName(dateStr);
+}
+function workdaysOf(y,m){
+  const last = new Date(y,m,0).getDate();
+  const out = [];
+  for (let i=1;i<=last;i++){
+    const s = `${y}-${String(m).padStart(2,"0")}-${String(i).padStart(2,"0")}`;
+    if (isWorkday(s)) out.push(s);
   }
-};
+  return out;
+}
 
-// ログアウト
-window.logout = async function() {
+/* ===================== 認証 ===================== */
+window.loginWithEmail = async function(){
+  const email = document.getElementById("emailInput").value.trim();
+  const pw    = document.getElementById("passwordInput").value;
+  const errEl = document.getElementById("loginError");
+  errEl.textContent = "";
+  if (!email || !pw){ errEl.textContent = "メールアドレスとパスワードを入力してください。"; return; }
   try {
-    await signOut(firebaseAuth);
-    console.log('✅ ログアウト成功');
-  } catch (error) {
-    console.error('❌ ログアウトエラー:', error);
+    await signInWithEmailAndPassword(auth, email, pw);
+  } catch (e){
+    const map = {
+      "auth/invalid-credential":"メールアドレスかパスワードが違います。",
+      "auth/invalid-email":"メールアドレスの形式が正しくありません。",
+      "auth/user-not-found":"このメールアドレスは登録されていません。",
+      "auth/wrong-password":"パスワードが違います。",
+      "auth/too-many-requests":"試行回数が多すぎます。しばらく待ってからやり直してください。"
+    };
+    errEl.textContent = map[e.code] || ("ログインできませんでした（" + e.code + "）");
+  }
+};
+document.getElementById("passwordInput").addEventListener("keydown",e=>{
+  if (e.key === "Enter") window.loginWithEmail();
+});
+
+window.showSignup = function(on){
+  document.querySelectorAll("#loginScreen .login-card")[0].style.display = on ? "none" : "";
+  document.getElementById("signupCard").style.display = on ? "" : "none";
+  document.getElementById("loginError").textContent  = "";
+  document.getElementById("signupError").textContent = "";
+};
+
+window.signUp = async function(){
+  const errEl = document.getElementById("signupError");
+  errEl.style.color = "";
+  const code  = document.getElementById("suCode").value.trim();
+  const email = document.getElementById("suEmail").value.trim();
+  const pw    = document.getElementById("suPw").value;
+  const pw2   = document.getElementById("suPw2").value;
+
+  if (code !== SIGNUP_CODE){ errEl.textContent = "合言葉が違います。担当者に確認してください。"; return; }
+  if (!email){ errEl.textContent = "メールアドレスを入力してください。"; return; }
+  if (pw.length < 6){ errEl.textContent = "パスワードは6文字以上にしてください。"; return; }
+  if (pw !== pw2){ errEl.textContent = "確認用のパスワードが一致しません。"; return; }
+
+  try{
+    await createUserWithEmailAndPassword(auth, email, pw);
+    // 登録に成功すると自動でログインし、名前を選ぶ画面に進みます
+  } catch(e){
+    const map = {
+      "auth/email-already-in-use":"このメールアドレスはすでに登録されています。ログイン画面からお入りください。",
+      "auth/invalid-email":"メールアドレスの形式が正しくありません。",
+      "auth/weak-password":"パスワードが簡単すぎます。6文字以上で、推測されにくいものにしてください。",
+      "auth/operation-not-allowed":"新規登録が許可されていません。担当者にご連絡ください。"
+    };
+    errEl.textContent = map[e.code] || ("登録できませんでした（" + e.code + "）");
   }
 };
 
-// 認証状態の監視
-onAuthStateChanged(firebaseAuth, (user) => {
-  if (user) {
-    console.log('✅ ユーザー認証済み:', user.email);
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('mainScreen').style.display = 'block';
-    initApp();
+window.resetPassword = async function(){
+  const typed = document.getElementById("emailInput").value.trim();
+  const email = prompt("パスワード再設定のメールを送ります。\nメールアドレスを入力してください。", typed);
+  if (!email) return;
+  try{
+    await sendPasswordResetEmail(auth, email.trim());
+    document.getElementById("loginError").style.color = "var(--ok)";
+    document.getElementById("loginError").textContent = "再設定のメールを送りました。受信箱を確認してください。";
+  } catch(e){
+    document.getElementById("loginError").style.color = "";
+    document.getElementById("loginError").textContent =
+      e.code === "auth/user-not-found" ? "このメールアドレスは登録されていません。"
+      : "メールを送れませんでした（" + e.code + "）";
+  }
+};
+
+window.changePassword = async function(){
+  const user = auth.currentUser;
+  if (!user) return;
+  const cur = prompt("いまのパスワードを入力してください");
+  if (!cur) return;
+  const next = prompt("新しいパスワードを入力してください（6文字以上）");
+  if (!next) return;
+  if (next.length < 6){ alert("パスワードは6文字以上にしてください。"); return; }
+  const again = prompt("確認のため、もう一度入力してください");
+  if (next !== again){ alert("2回目の入力が一致しませんでした。"); return; }
+  try{
+    await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, cur));
+    await updatePassword(user, next);
+    alert("パスワードを変更しました。");
+  } catch(e){
+    alert(e.code === "auth/invalid-credential" || e.code === "auth/wrong-password"
+      ? "いまのパスワードが違います。"
+      : "変更できませんでした（" + e.code + "）");
+  }
+};
+
+window.logout = async function(){
+  if (unsubscribe){ unsubscribe(); unsubscribe = null; }
+  await signOut(auth);
+  isAdmin = false;
+};
+
+onAuthStateChanged(auth, async (user)=>{
+  if (user){
+    myEmail = user.email || "";
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("mainScreen").style.display  = "block";
+    document.getElementById("myEmailLabel").textContent  = myEmail;
+    buildFYSelect();
+    await loadYear();
+    listenYear();
+    resolveMyName();
+    renderAll();
   } else {
-    console.log('❌ ユーザー未認証');
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('mainScreen').style.display = 'none';
+    document.getElementById("loginScreen").style.display = "flex";
+    document.getElementById("mainScreen").style.display  = "none";
+    document.getElementById("passwordInput").value = "";
+    document.getElementById("toSignup").style.display = ALLOW_SELF_SIGNUP ? "" : "none";
+    window.showSignup(false);
   }
 });
 
-let currentYear = new Date().getFullYear();
-let currentMonth = new Date().getMonth() + 1;
+/* ===================== データ入出力 ===================== */
+function status(kind,msg){
+  const el = document.getElementById("syncStatus");
+  el.className = "status " + (kind||"");
+  el.textContent = msg || "";
+  if (kind === "" && msg) setTimeout(()=>{ if(el.textContent===msg) el.textContent=""; },1800);
+}
 
-// 年度の計算（4月始まり）
-function getFiscalYear(year, month) {
-  if (month >= 4) {
-    return year; // 4-12月 → その年の年度
-  } else {
-    return year - 1; // 1-3月 → 前年の年度
+async function loadYear(){
+  try{
+    const snap = await get(ref(db, `/${currentFY}`));
+    applyData(snap.val() || {});
+  } catch(e){
+    console.error(e); status("error","読み込みに失敗しました");
   }
 }
-
-// 初期年度を2025年度に設定（既存データを2025年度として扱う）
-let currentFiscalYear = 2025;
-let realtimeUnsubscribe = null; // リアルタイムリスナーの解除関数
-
-let members = ["竹本", "村松", "冨樫", "米村", "大原", "大橋", "野々垣", "大川", "後閑", "内藤", "吉田", "藤井", "山崎"];
-let shiftData = {};
-let assignedData = {};
-let backupAssignedData = {};
-let yearlyTotals = {};
-let customHolidays = [];
-let monthlyTargets = {}; // { 'YYYY-MM': { memberName: targetCount } }
-
-const holidays = {
-  '2024-01-01': '元日', '2024-01-08': '成人の日', '2024-02-11': '建国記念の日',
-  '2024-02-12': '振替休日', '2024-02-23': '天皇誕生日', '2024-03-20': '春分の日',
-  '2024-04-29': '昭和の日', '2024-05-03': '憲法記念日', '2024-05-04': 'みどりの日',
-  '2024-05-05': 'こどもの日', '2024-05-06': '振替休日', '2024-07-15': '海の日',
-  '2024-08-11': '山の日', '2024-08-12': '振替休日', '2024-09-16': '敬老の日',
-  '2024-09-22': '秋分の日', '2024-09-23': '振替休日', '2024-10-14': 'スポーツの日',
-  '2024-11-03': '文化の日', '2024-11-04': '振替休日', '2024-11-23': '勤労感謝の日',
-  '2025-01-01': '元日', '2025-01-13': '成人の日', '2025-02-11': '建国記念の日',
-  '2025-02-23': '天皇誕生日', '2025-02-24': '振替休日', '2025-03-20': '春分の日',
-  '2025-04-29': '昭和の日', '2025-05-03': '憲法記念日', '2025-05-04': 'みどりの日',
-  '2025-05-05': 'こどもの日', '2025-05-06': '振替休日', '2025-07-21': '海の日',
-  '2025-08-11': '山の日', '2025-09-15': '敬老の日', '2025-09-23': '秋分の日',
-  '2025-10-13': 'スポーツの日', '2025-11-03': '文化の日', '2025-11-23': '勤労感謝の日',
-  '2025-11-24': '振替休日', '2026-01-01': '元日', 
-  '2026-01-12': '成人の日', '2026-02-11': '建国記念の日', '2026-02-23': '天皇誕生日', 
-  '2026-03-20': '春分の日', '2026-04-29': '昭和の日', '2026-05-03': '憲法記念日', 
-  '2026-05-04': 'みどりの日', '2026-05-05': 'こどもの日', '2026-05-06': '振替休日', 
-  '2026-07-20': '海の日', '2026-08-11': '山の日', '2026-09-21': '敬老の日', 
-  '2026-09-22': '国民の休日', '2026-09-23': '秋分の日', '2026-10-12': 'スポーツの日', 
-  '2026-11-03': '文化の日', '2026-11-23': '勤労感謝の日'
-};
-
-async function initApp() {
-  // 年度選択の初期値を設定
-  document.getElementById('fiscalYearSelect').value = currentFiscalYear.toString();
-  
-  await loadData();
-  setupRealtimeListeners();
-  renderCalendar();
-  renderMemberList();
-  renderHolidayList();
-  renderTargetInputs();
-  updateCountTable();
-  
-  // 初期化完了後、同期済みステータスを確実に設定
-  setTimeout(() => {
-    updateSyncStatus('success');
-  }, 1000);
+function applyData(d){
+  members            = Array.isArray(d.members) ? d.members : [];
+  shiftData          = d.shiftData || {};
+  assignedData       = d.assignedData || {};
+  backupAssignedData = d.backupAssignedData || {};
+  userMap            = d.userMap || {};
+  customHolidays     = Array.isArray(d.customHolidays) ? d.customHolidays : [];
+  retired            = Array.isArray(d.retired) ? d.retired : [];
+  targets            = d.targets || {};
 }
-
-async function loadData() {
-  try {
-    const snapshot = await get(ref(database, `/${currentFiscalYear}`));
-    const data = snapshot.val() || {};
-    
-    if (data.members && data.members.length > 0) {
-      members = data.members;
-    } else {
-      // 新年度でメンバーが未設定の場合、前年度からコピーするか確認
-      members = ["竹本", "村松", "冨樫", "米村", "大原", "大橋", "野々垣", "大川", "後閑", "内藤", "吉田", "藤井", "山崎"];
-    }
-    shiftData = data.shiftData || {};
-    assignedData = data.assignedData || {};
-    backupAssignedData = data.backupAssignedData || {};
-    yearlyTotals = data.yearlyTotals || {};
-    customHolidays = data.customHolidays || [];
-    monthlyTargets = data.monthlyTargets || {};
-
-    console.log(`📥 ${currentFiscalYear}年度データ読み込み完了`, {members: members.length});
-  } catch (error) {
-    console.error('❌ データ読み込みエラー:', error);
-  }
+function listenYear(){
+  if (unsubscribe){ unsubscribe(); unsubscribe = null; }
+  unsubscribe = onValue(ref(db, `/${currentFY}`), snap=>{
+    if (localDirty) return;              // 自分の編集が保存待ちの間は上書きしない
+    applyData(snap.val() || {});
+    resolveMyName();
+    renderAll();
+  }, err=>{
+    console.error(err); status("error","接続エラー");
+  });
 }
-
-async function saveData() {
-  try {
-    console.log(`💾 ${currentFiscalYear}年度データ保存開始...`);
-    updateSyncStatus('syncing');
-    
-    console.log('📊 保存するデータ:', {
-      fiscalYear: currentFiscalYear,
-      members: members.length,
-      shiftData: Object.keys(shiftData).length,
-      assignedData: Object.keys(assignedData).length,
-      backupAssignedData: Object.keys(backupAssignedData).length,
-      yearlyTotals: Object.keys(yearlyTotals).length,
-      customHolidays: customHolidays.length
+async function saveYear(){
+  status("saving","保存中…");
+  try{
+    await set(ref(db, `/${currentFY}`), {
+      members, shiftData, assignedData, backupAssignedData, userMap, customHolidays, retired, targets
     });
-    
-    const startTime = Date.now();
-    
-    await set(ref(database, `/${currentFiscalYear}`), {
-      members,
-      shiftData,
-      assignedData,
-      backupAssignedData,
-      yearlyTotals,
-      customHolidays,
-      monthlyTargets
-    });
-    
-    const elapsed = Date.now() - startTime;
-    console.log(`✅ ${currentFiscalYear}年度データ保存完了 (${elapsed}ms)`);
-    
-    // 保存完了後すぐに同期済みに戻す
-    setTimeout(() => {
-      updateSyncStatus('success');
-    }, 500);
-    
-  } catch (error) {
-    console.error('❌ データ保存エラー:', error);
-    console.error('エラー詳細:', error.message);
-    console.error('エラーコード:', error.code);
-    updateSyncStatus('error');
-    alert('保存エラー: ' + error.message);
-    
-    // エラーでも2秒後に「同期済み」に戻す
-    setTimeout(() => {
-      updateSyncStatus('success');
-    }, 2000);
+    status("","保存しました");
+  } catch(e){
+    console.error(e); status("error","保存に失敗しました: " + e.message);
+  } finally {
+    localDirty = false;
   }
 }
-
-let updateTimeout = null;
-
-function setupRealtimeListeners() {
-  console.log(`👂 ${currentFiscalYear}年度のリアルタイムリスナーを設定中...`);
-  
-  // 既存のリスナーがあれば解除
-  if (realtimeUnsubscribe) {
-    console.log('🔌 既存のリスナーを解除');
-    realtimeUnsubscribe();
-  }
-  
-  // 新しいリスナーを設定
-  realtimeUnsubscribe = onValue(ref(database, `/${currentFiscalYear}`), (snapshot) => {
-    console.log(`📡 ${currentFiscalYear}年度のデータ受信`);
-    
-    // 既存の更新タイマーをクリア
-    if (updateTimeout) {
-      clearTimeout(updateTimeout);
-    }
-    
-    // 300ms後に更新（連続した更新を防ぐ）
-    updateTimeout = setTimeout(() => {
-      const data = snapshot.val() || {};
-      console.log('🔄 リアルタイム更新開始', {
-        fiscalYear: currentFiscalYear,
-        members: data.members?.length || 0,
-        shiftData: Object.keys(data.shiftData || {}).length,
-        assignedData: Object.keys(data.assignedData || {}).length,
-        backupAssignedData: Object.keys(data.backupAssignedData || {}).length
-      });
-      
-      if (data.members && data.members.length > 0) {
-        members = data.members;
-      }
-      shiftData = data.shiftData || {};
-      assignedData = data.assignedData || {};
-      backupAssignedData = data.backupAssignedData || {};
-      yearlyTotals = data.yearlyTotals || {};
-      customHolidays = data.customHolidays || [];
-      monthlyTargets = data.monthlyTargets || {};
-      
-      renderCalendar();
-      renderMemberList();
-      renderHolidayList();
-      renderTargetInputs();
-      updateCountTable();
-      console.log('✅ リアルタイム更新完了');
-    }, 300);
-  }, (error) => {
-    console.error('❌ リアルタイムリスナーエラー:', error);
-    console.error('エラー詳細:', error.message);
-    alert('Firebase接続エラー: ' + error.message);
-  });
+function saveSoon(){
+  clearTimeout(saveTimer);
+  localDirty = true;
+  status("saving","保存中…");
+  saveTimer = setTimeout(saveYear, 400);
 }
 
-function updateSyncStatus(status) {
-  const statusEl = document.getElementById('syncStatus');
-  statusEl.className = 'sync-status';
-  
-  switch(status) {
-    case 'syncing':
-      statusEl.textContent = '⟳ 同期中...';
-      statusEl.classList.add('syncing');
-      break;
-    case 'success':
-      statusEl.textContent = '✓ 同期済み';
-      break;
-    case 'error':
-      statusEl.textContent = '✗ エラー';
-      statusEl.classList.add('error');
-      break;
-  }
+/* ===================== 本人の特定 ===================== */
+function resolveMyName(){
+  myName = userMap[emailKey(myEmail)] || "";
+  const lbl = document.getElementById("myNameLabel");
+  lbl.textContent = myName || "名前が未設定";
+  isAdmin = isAdmin || ADMIN_EMAILS.includes(myEmail);
+  document.getElementById("adminBadge").innerHTML = isAdmin ? '<span class="badge-admin">管理者</span>' : "";
+  document.getElementById("adminTab").style.display = isAdmin ? "" : "none";
+  document.getElementById("adminEntryBtn").style.display = isAdmin ? "none" : "";
 }
 
-window.manualSave = async function() {
-  console.log('💾 手動保存を開始');
-  await saveData();
-  alert('保存しました！');
-};
-
-window.addMember = async function() {
-  const input = document.getElementById('newMemberName');
-  const name = input.value.trim();
-  
-  if (!name) {
-    alert('メンバー名を入力してください');
-    return;
-  }
-  
-  if (members.includes(name)) {
-    alert('このメンバーは既に登録されています');
-    return;
-  }
-  
-  members.push(name);
-  input.value = '';
-  
-  if (!yearlyTotals[name]) {
-    yearlyTotals[name] = { am: 0, pm: 0 };
-  }
-  
-  await saveData();
-};
-
-window.removeMember = async function(name) {
-  console.log('🗑️ メンバー削除開始:', name);
-  
-  if (!confirm(`${name} を削除しますか？\nこのメンバーのシフトデータもすべて削除されます。`)) {
-    console.log('キャンセルされました');
-    return;
-  }
-  
-  console.log('削除前のメンバー:', members);
-  
-  members = members.filter(m => m !== name);
-  
-  console.log('削除後のメンバー:', members);
-  
-  // シフトデータの削除
-  let deletedShifts = 0;
-  Object.keys(shiftData).forEach(key => {
-    if (key.includes(`_${name}_`)) {
-      delete shiftData[key];
-      deletedShifts++;
-    }
-  });
-  
-  console.log(`シフトデータ削除: ${deletedShifts}件`);
-  
-  // 担当データの削除
-  let deletedAssignments = 0;
-  Object.keys(assignedData).forEach(key => {
-    if (assignedData[key] === name) {
-      delete assignedData[key];
-      deletedAssignments++;
-    }
-  });
-  
-  console.log(`担当データ削除: ${deletedAssignments}件`);
-  
-  // バックアップ担当データの削除
-  let deletedBackupAssignments = 0;
-  Object.keys(backupAssignedData).forEach(key => {
-    if (backupAssignedData[key] === name) {
-      delete backupAssignedData[key];
-      deletedBackupAssignments++;
-    }
-  });
-  
-  console.log(`バックアップ担当データ削除: ${deletedBackupAssignments}件`);
-  
-  // 累計データの削除
-  if (yearlyTotals[name]) {
-    delete yearlyTotals[name];
-    console.log('累計データ削除');
-  }
-  
-  // データを保存
-  await saveData();
-  
-  // UIを強制的に更新
-  renderCalendar();
-  renderMemberList();
-  updateCountTable();
-  
-  console.log('✅ メンバー削除完了:', name);
-  alert(`${name} を削除しました`);
-};
-
-window.showDeleteMemberDialog = async function() {
-  if (members.length === 0) {
-    alert('削除するメンバーがいません');
-    return;
-  }
-  
-  console.log('現在のメンバー:', members);
-  
-  const message = 'メンバーを選択してください:\n\n' + 
-    members.map((name, i) => `${i + 1}: ${name}`).join('\n');
-  
-  const input = prompt(message, '1');
-  
-  if (input === null) {
-    console.log('キャンセルされました');
-    return;
-  }
-  
-  const index = parseInt(input) - 1;
-  
-  if (isNaN(index) || index < 0 || index >= members.length) {
-    alert('無効な番号です');
-    console.log('無効な番号:', input);
-    return;
-  }
-  
-  const selectedMember = members[index];
-  console.log('選択されたメンバー:', selectedMember);
-  
-  await removeMember(selectedMember);
-};
-
-function renderMemberList() {
-  const listEl = document.getElementById('memberList');
-  if (!members || members.length === 0) {
-    listEl.innerHTML = '<div style="color: #666; font-size: 12px;">メンバーが登録されていません</div>';
-    return;
-  }
-  
-  listEl.innerHTML = '<div style="margin-top: 5px; font-size: 12px; color: #666;">登録メンバー（×をクリックで削除）:</div>' + 
-    members.map(name => `
-    <div class="member-item">
-      ${name}
-      <button onclick="handleRemoveMember('${name}')" title="削除">×</button>
-    </div>
-  `).join('');
-}
-
-// ×ボタン用のハンドラー
-window.handleRemoveMember = async function(name) {
-  await removeMember(name);
-};
-
-window.addCustomHoliday = async function() {
-  const dateInput = document.getElementById('newHolidayDate');
-  const date = dateInput.value;
-  
-  if (!date) {
-    alert('日付を選択してください');
-    return;
-  }
-  
-  if (customHolidays.includes(date)) {
-    alert('この日付は既に休日として登録されています');
-    return;
-  }
-  
-  customHolidays.push(date);
-  customHolidays.sort();
-  
-  dateInput.value = '';
-  
-  await saveData();
-};
-
-window.removeCustomHoliday = async function(date) {
-  if (!confirm(`${date}の休日設定を削除しますか？`)) return;
-  
-  customHolidays = customHolidays.filter(h => h !== date);
-  
-  await saveData();
-};
-
-function renderHolidayList() {
-  const listEl = document.getElementById('holidayList');
-  if (!customHolidays || customHolidays.length === 0) {
-    listEl.innerHTML = '<div style="color: #666; font-size: 12px;">追加された休日はありません</div>';
-    return;
-  }
-  
-  listEl.innerHTML = customHolidays.map(date => `
-    <div class="member-item">
-      ${date}
-      <button onclick="removeCustomHoliday('${date}')">×</button>
-    </div>
-  `).join('');
-}
-
-window.changeMonth = function(delta) {
-  if (delta === 0) {
-    const now = new Date();
-    currentYear = now.getFullYear();
-    currentMonth = now.getMonth() + 1;
-  } else {
-    currentMonth += delta;
-    if (currentMonth > 12) {
-      currentMonth = 1;
-      currentYear++;
-    } else if (currentMonth < 1) {
-      currentMonth = 12;
-      currentYear--;
-    }
-  }
-  
-  // 月が変わったので年度も再計算
-  const newFiscalYear = getFiscalYear(currentYear, currentMonth);
-  if (newFiscalYear !== currentFiscalYear) {
-    // 年度が変わった場合、データを読み込み直す
-    currentFiscalYear = newFiscalYear;
-    document.getElementById('fiscalYearSelect').value = currentFiscalYear.toString();
-    loadData().then(() => {
-      setupRealtimeListeners(); // リアルタイムリスナーを再設定
-      renderCalendar();
-      renderMemberList();
-      renderHolidayList();
-      updateCountTable();
-    });
-  } else {
-    renderCalendar();
-    renderTargetInputs();
-    updateCountTable();
-  }
-};
-
-window.changeFiscalYear = async function() {
-  const selectedYear = parseInt(document.getElementById('fiscalYearSelect').value);
-  
-  if (selectedYear === currentFiscalYear) {
-    return; // 変更なし
-  }
-  
-  if (!confirm(`${selectedYear}年度に切り替えますか？\n現在の編集内容は保存されます。`)) {
-    // キャンセルされたら選択を戻す
-    document.getElementById('fiscalYearSelect').value = currentFiscalYear.toString();
-    return;
-  }
-  
-  // 現在のデータを保存
-  await saveData();
-  
-  // 年度を切り替え
-  currentFiscalYear = selectedYear;
-  
-  // 表示月をその年度の4月に変更
-  currentYear = selectedYear;
-  currentMonth = 4;
-  
-  // 新しい年度のデータを読み込み
-  await loadData();
-  
-  // リアルタイムリスナーを再設定
-  setupRealtimeListeners();
-  
-  // 画面を再描画
-  renderCalendar();
-  renderMemberList();
-  renderHolidayList();
-  renderTargetInputs();
-  updateCountTable();
-  
-  console.log(`✅ ${currentFiscalYear}年度に切り替えました`);
-};
-
-function renderCalendar() {
-  document.getElementById('currentMonth').textContent = `${currentYear}年${currentMonth}月`;
-  
-  const headerRow = document.getElementById('headerRow');
-  headerRow.innerHTML = '<th>日付</th><th>時間</th><th>担当</th><th>バックアップ担当</th>';
-  members.forEach(name => {
-    headerRow.innerHTML += `<th>${name}</th>`;
-  });
-  
-  const tbody = document.getElementById('calendarBody');
-  tbody.innerHTML = '';
-  
-  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-  
-  for (let day = 1; day <= daysInMonth; day++) {
-    const date = new Date(currentYear, currentMonth - 1, day);
-    const dayOfWeek = date.getDay();
-    const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const weekDayNames = ['日', '月', '火', '水', '木', '金', '土'];
-    
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-    const isHoliday = holidays[dateStr] || customHolidays.includes(dateStr);
-    const bgClass = (isWeekend || isHoliday) ? 'weekend-bg' : '';
-    
-    // AM行
-    const amRow = document.createElement('tr');
-    
-    // 日付セル
-    const dateCell = document.createElement('td');
-    dateCell.className = bgClass;
-    dateCell.rowSpan = 2;
-    dateCell.style.fontSize = '11px';
-    dateCell.style.lineHeight = '1.2';
-    dateCell.innerHTML = `${day}<br>(${weekDayNames[dayOfWeek]})`;
-    amRow.appendChild(dateCell);
-    
-    // AM時間セル
-    const amTimeCell = document.createElement('td');
-    amTimeCell.className = bgClass;
-    amTimeCell.textContent = 'AM';
-    amRow.appendChild(amTimeCell);
-    
-    // AM担当セル
-    const amAssignCell = document.createElement('td');
-    amAssignCell.className = `assigned-cell ${bgClass}`;
-    const amSelect = document.createElement('select');
-    amSelect.innerHTML = '<option value="">-</option>' + members.map(m => 
-      `<option value="${m}" ${assignedData[dateStr + '_am'] === m ? 'selected' : ''}>${m}</option>`
-    ).join('');
-    amSelect.addEventListener('change', async function() {
-      await updateAssigned(dateStr, 'am', this.value);
-    });
-    amAssignCell.appendChild(amSelect);
-    amRow.appendChild(amAssignCell);
-    
-    // AMバックアップ担当セル
-    const amBackupAssignCell = document.createElement('td');
-    amBackupAssignCell.className = `backup-assigned-cell ${bgClass}`;
-    const amBackupSelect = document.createElement('select');
-    amBackupSelect.innerHTML = '<option value="">-</option>' + members.map(m => 
-      `<option value="${m}" ${backupAssignedData[dateStr + '_am'] === m ? 'selected' : ''}>${m}</option>`
-    ).join('');
-    amBackupSelect.addEventListener('change', async function() {
-      await updateBackupAssigned(dateStr, 'am', this.value);
-    });
-    amBackupAssignCell.appendChild(amBackupSelect);
-    amRow.appendChild(amBackupAssignCell);
-    
-    // AMシフト希望セル
-    members.forEach(name => {
-      const key = `${dateStr}_${name}_am`;
-      const value = shiftData[key] || '';
-      const cellClass = value === '○' ? 'good' : value === '△' ? 'ok' : value === '×' ? 'bad' : '';
-      
-      const td = document.createElement('td');
-      td.className = `shift-cell ${cellClass} ${bgClass}`;
-      td.textContent = value || '-';
-      
-      td.setAttribute('data-date', dateStr);
-      td.setAttribute('data-name', name);
-      td.setAttribute('data-period', 'am');
-      td.onclick = function() {
-        toggleShift(dateStr, name, 'am');
-      };
-      amRow.appendChild(td);
-    });
-    
-    // PM行
-    const pmRow = document.createElement('tr');
-    
-    // PM時間セル
-    const pmTimeCell = document.createElement('td');
-    pmTimeCell.className = `pm-time-cell ${bgClass}`;
-    pmTimeCell.textContent = 'PM';
-    pmRow.appendChild(pmTimeCell);
-    
-    // PM担当セル
-    const pmAssignCell = document.createElement('td');
-    pmAssignCell.className = `assigned-cell pm-assigned-cell ${bgClass}`;
-    const pmSelect = document.createElement('select');
-    pmSelect.innerHTML = '<option value="">-</option>' + members.map(m => 
-      `<option value="${m}" ${assignedData[dateStr + '_pm'] === m ? 'selected' : ''}>${m}</option>`
-    ).join('');
-    pmSelect.addEventListener('change', async function() {
-      await updateAssigned(dateStr, 'pm', this.value);
-    });
-    pmAssignCell.appendChild(pmSelect);
-    pmRow.appendChild(pmAssignCell);
-    
-    // PMバックアップ担当セル
-    const pmBackupAssignCell = document.createElement('td');
-    pmBackupAssignCell.className = `backup-assigned-cell pm-backup-assigned-cell ${bgClass}`;
-    const pmBackupSelect = document.createElement('select');
-    pmBackupSelect.innerHTML = '<option value="">-</option>' + members.map(m => 
-      `<option value="${m}" ${backupAssignedData[dateStr + '_pm'] === m ? 'selected' : ''}>${m}</option>`
-    ).join('');
-    pmBackupSelect.addEventListener('change', async function() {
-      await updateBackupAssigned(dateStr, 'pm', this.value);
-    });
-    pmBackupAssignCell.appendChild(pmBackupSelect);
-    pmRow.appendChild(pmBackupAssignCell);
-    
-    // PMシフト希望セル
-    members.forEach(name => {
-      const key = `${dateStr}_${name}_pm`;
-      const value = shiftData[key] || '';
-      const cellClass = value === '○' ? 'good' : value === '△' ? 'ok' : value === '×' ? 'bad' : '';
-      
-      const td = document.createElement('td');
-      td.className = `shift-cell pm-shift-cell ${cellClass} ${bgClass}`;
-      td.textContent = value || '-';
-      
-      td.setAttribute('data-date', dateStr);
-      td.setAttribute('data-name', name);
-      td.setAttribute('data-period', 'pm');
-      td.onclick = function() {
-        toggleShift(dateStr, name, 'pm');
-      };
-      pmRow.appendChild(td);
-    });
-    
-    tbody.appendChild(amRow);
-    tbody.appendChild(pmRow);
-  }
-  
-  console.log('✅ カレンダー描画完了');
-}
-
-let toggleTimeout = null;
-
-async function toggleShift(date, member, period) {
-  // 連続クリックを防ぐ
-  if (toggleTimeout) {
-    clearTimeout(toggleTimeout);
-  }
-  
-  const key = `${date}_${member}_${period}`;
-  const current = shiftData[key] || '';
-  
-  const nextValue = current === '' ? '○' : current === '○' ? '△' : current === '△' ? '×' : '';
-  
-  if (nextValue === '') {
-    delete shiftData[key];
-  } else {
-    shiftData[key] = nextValue;
-  }
-  
-  console.log(`シフト更新: ${date} ${member} ${period} → ${nextValue || '空白'}`);
-  
-  // 即座にUIを更新
-  renderCalendar();
-  
-  // 500ms後に保存
-  toggleTimeout = setTimeout(async () => {
-    await saveData();
-  }, 500);
-}
-
-async function updateAssigned(date, period, newAssigned) {
-  const key = `${date}_${period}`;
-  const oldAssigned = assignedData[key];
-  
-  if (oldAssigned && yearlyTotals[oldAssigned]) {
-    yearlyTotals[oldAssigned][period] = Math.max(0, yearlyTotals[oldAssigned][period] - 1);
-  }
-  
-  if (newAssigned) {
-    assignedData[key] = newAssigned;
-    if (!yearlyTotals[newAssigned]) {
-      yearlyTotals[newAssigned] = { am: 0, pm: 0 };
-    }
-    yearlyTotals[newAssigned][period]++;
-  } else {
-    delete assignedData[key];
-  }
-  
-  await saveData();
-  updateCountTable();
-}
-
-async function updateBackupAssigned(date, period, newBackupAssigned) {
-  const key = `${date}_${period}`;
-  
-  if (newBackupAssigned) {
-    backupAssignedData[key] = newBackupAssigned;
-  } else {
-    delete backupAssignedData[key];
-  }
-  
-  await saveData();
-  renderCalendar();
-}
-
-// ========== 月間個人別目標回数 ==========
-
-function getCurrentMonthKey() {
-  return `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
-}
-
-function renderTargetInputs() {
-  const container = document.getElementById('targetInputList');
-  if (!container) return;
-  const key = getCurrentMonthKey();
-  const targets = (monthlyTargets && monthlyTargets[key]) ? monthlyTargets[key] : {};
-
-  container.innerHTML = members.map(name => {
-    const val = targets[name] !== undefined ? targets[name] : '';
-    const hasTarget = val !== '' && val !== undefined;
-    return `<div class="target-input-item${hasTarget ? ' has-target' : ''}" id="target-item-${name}">
-      <span class="target-name">${name}</span>
-      <input type="number" min="0" max="31" value="${val}" placeholder="－"
-        oninput="setMemberTarget('${name}', this.value)"
-        style="width:52px;">
-      <span class="target-unit">回</span>
-      <span class="target-badge">設定済</span>
-    </div>`;
-  }).join('');
-
-  updateTargetBalance();
-}
-
-function updateTargetBalance() {
-  // 今月の平日数（土日・祝日を除く）を計算
-  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-  let weekdays = 0;
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const date = new Date(currentYear, currentMonth - 1, day);
-    const dow = date.getDay();
-    const isWeekend = dow === 0 || dow === 6;
-    const isHoliday = holidays[dateStr] || customHolidays.includes(dateStr);
-    if (!isWeekend && !isHoliday) weekdays++;
-  }
-  const totalShifts = weekdays * 2; // AM + PM
-
-  // 目標設定の合計（空欄は0としてカウント）
-  const key = getCurrentMonthKey();
-  const targets = (monthlyTargets && monthlyTargets[key]) ? monthlyTargets[key] : {};
-  let targetSum = 0;
-  let anyTargetSet = false;
-  members.forEach(name => {
-    const t = targets[name];
-    if (t !== undefined && t !== null && t !== '') {
-      targetSum += parseInt(t, 10);
-      anyTargetSet = true;
-    }
-  });
-
-  // 表示更新
-  const totalEl = document.getElementById('totalShiftsCount');
-  const weekdayEl = document.getElementById('weekdayCount');
-  const sumEl = document.getElementById('targetSumCount');
-  const statusEl = document.getElementById('targetBalanceStatus');
-  const barEl = document.getElementById('targetBalanceBar');
-  if (!totalEl || !sumEl || !statusEl || !barEl) return;
-
-  totalEl.textContent = totalShifts;
-  if (weekdayEl) weekdayEl.textContent = weekdays;
-  sumEl.textContent = targetSum;
-
-  if (!anyTargetSet) {
-    statusEl.textContent = '目標未設定';
-    statusEl.style.background = '#eee';
-    statusEl.style.color = '#888';
-    barEl.style.borderColor = '#ccc';
-    barEl.style.background = 'white';
-  } else {
-    const diff = totalShifts - targetSum;
-    if (diff === 0) {
-      statusEl.textContent = '✅ ぴったり！';
-      statusEl.style.background = '#d4edda';
-      statusEl.style.color = '#155724';
-      barEl.style.borderColor = '#28a745';
-      barEl.style.background = '#f0fff4';
-    } else if (diff > 0) {
-      statusEl.textContent = `⚠️ あと ${diff} 回 足りない`;
-      statusEl.style.background = '#fff3cd';
-      statusEl.style.color = '#856404';
-      barEl.style.borderColor = '#ffc107';
-      barEl.style.background = '#fffdf0';
-    } else {
-      statusEl.textContent = `❗ ${Math.abs(diff)} 回 超過`;
-      statusEl.style.background = '#f8d7da';
-      statusEl.style.color = '#721c24';
-      barEl.style.borderColor = '#dc3545';
-      barEl.style.background = '#fff5f5';
-    }
-  }
-}
-
-window.setMemberTarget = async function(memberName, value) {
-  const key = getCurrentMonthKey();
-  if (!monthlyTargets) monthlyTargets = {};
-  if (!monthlyTargets[key]) monthlyTargets[key] = {};
-
-  const item = document.getElementById(`target-item-${memberName}`);
-
-  if (value === '' || value === null || value === undefined) {
-    delete monthlyTargets[key][memberName];
-    if (item) item.classList.remove('has-target');
-  } else {
-    monthlyTargets[key][memberName] = parseInt(value, 10);
-    if (item) item.classList.add('has-target');
-  }
-
-  // バランス表示をリアルタイム更新（保存は別途デバウンス）
-  updateTargetBalance();
-
-  clearTimeout(window._targetSaveTimer);
-  window._targetSaveTimer = setTimeout(async () => {
-    await saveData();
-  }, 800);
-};
-
-// ========================================
-
-window.autoAssign = async function() {
-  if (!confirm('今月の未割当日を自動的に割り振りますか？\n※土日・祝日はスキップします\n※バックアップ担当も自動割り振りします')) return;
-  
-  console.log('🎯 自動割り振り開始');
-  console.log(`対象月: ${currentYear}年${currentMonth}月`);
-  console.log(`メンバー数: ${members.length}`);
-  
-  // 今月の既存割り当てをカウント
-  const monthlyCount = {};
-  members.forEach(name => {
-    monthlyCount[name] = { am: 0, pm: 0 };
-  });
-  
-  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    
-    const amAssigned = assignedData[dateStr + '_am'];
-    const pmAssigned = assignedData[dateStr + '_pm'];
-    
-    if (amAssigned && monthlyCount[amAssigned]) {
-      monthlyCount[amAssigned].am++;
-    }
-    if (pmAssigned && monthlyCount[pmAssigned]) {
-      monthlyCount[pmAssigned].pm++;
-    }
-  }
-  
-  console.log('📊 今月の既存カウント:', monthlyCount);
-  
-  // バックアップのカウント
-  const monthlyBackupCount = {};
-  members.forEach(name => {
-    monthlyBackupCount[name] = 0;
-  });
-  
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const amBackup = backupAssignedData[dateStr + '_am'];
-    if (amBackup && monthlyBackupCount[amBackup] !== undefined) {
-      monthlyBackupCount[amBackup]++;
-    }
-  }
-  
-  let assigned = 0;
-  let backupAssigned = 0;
-  let skipped = 0;
-  
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const date = new Date(currentYear, currentMonth - 1, day);
-    const dayOfWeek = date.getDay();
-    
-    // 土日・祝日をスキップ
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-    const isHoliday = holidays[dateStr] || customHolidays.includes(dateStr);
-    
-    if (isWeekend || isHoliday) {
-      console.log(`${dateStr}: 土日祝日のためスキップ`);
-      skipped++;
-      continue;
-    }
-    
-    // AM
-    if (!assignedData[dateStr + '_am']) {
-      const member = selectBestMember(dateStr, 'am', monthlyCount);
-      console.log(`${dateStr} AM: ${member}を選択`);
-      if (member) {
-        assignedData[dateStr + '_am'] = member;
-        monthlyCount[member].am++;
-        if (!yearlyTotals[member]) yearlyTotals[member] = { am: 0, pm: 0 };
-        yearlyTotals[member].am++;
-        assigned++;
-      }
-    }
-    
-    // PM
-    if (!assignedData[dateStr + '_pm']) {
-      const member = selectBestMember(dateStr, 'pm', monthlyCount);
-      console.log(`${dateStr} PM: ${member}を選択`);
-      if (member) {
-        assignedData[dateStr + '_pm'] = member;
-        monthlyCount[member].pm++;
-        if (!yearlyTotals[member]) yearlyTotals[member] = { am: 0, pm: 0 };
-        yearlyTotals[member].pm++;
-        assigned++;
-      }
-    }
-    
-    // バックアップ担当（AMのみ）
-    if (!backupAssignedData[dateStr + '_am']) {
-      const backup = selectBestBackup(dateStr, monthlyBackupCount);
-      console.log(`${dateStr} バックアップ: ${backup}を選択`);
-      if (backup) {
-        backupAssignedData[dateStr + '_am'] = backup;
-        monthlyBackupCount[backup]++;
-        backupAssigned++;
-      }
-    }
-  }
-  
-  console.log('📊 今月の最終カウント:', monthlyCount);
-  console.log(`✅ 自動割り振り完了: 担当${assigned}件、バックアップ${backupAssigned}件 (${skipped}日スキップ)`);
-  
-  await saveData();
-  renderCalendar();
-  updateCountTable();
-  alert(`自動割り振り完了\n担当: ${assigned}件\nバックアップ: ${backupAssigned}件\n（土日祝日${skipped}日はスキップしました）`);
-};
-
-function selectBestMember(date, period, monthlyCount) {
-  if (members.length === 0) {
-    console.log('❌ メンバーが0人');
-    return null;
-  }
-
-  // 月間目標を取得
-  const monthKey = getCurrentMonthKey();
-  const targets = (monthlyTargets && monthlyTargets[monthKey]) ? monthlyTargets[monthKey] : {};
-
-  const candidates = members.map(name => {
-    const key = `${date}_${name}_${period}`;
-    const preference = shiftData[key] || '';
-    const totals = monthlyCount[name] || { am: 0, pm: 0 };
-
-    // ×は除外
-    const isAvailable = preference !== '×';
-
-    // 月間目標チェック：0は割り振らない、数値設定済みで上限に達している場合は除外
-    const target = targets[name];
-    let targetExceeded = false;
-    if (target === 0) {
-      targetExceeded = true; // 0設定は割り振らない
-    } else if (target > 0) {
-      const currentTotal = totals.am + totals.pm;
-      targetExceeded = currentTotal >= target;
-    }
-
-    return {
-      name,
-      isAvailable,
-      preference,
-      amTotal: totals.am,
-      pmTotal: totals.pm,
-      total: totals.am + totals.pm,
-      hasTarget: target !== undefined && target !== null && target !== '',
-      targetExceeded
-    };
-  });
-
-  // ×でない かつ 目標に達していない人を優先候補に
-  const preferred = candidates.filter(c => c.isAvailable && !c.targetExceeded);
-
-  // 目標設定済みの人が全員上限に達している場合、制限なしメンバーにフォールバック
-  const available = preferred.length > 0 ? preferred : candidates.filter(c => c.isAvailable);
-
-  if (available.length === 0) {
-    console.log('  選択可能なメンバーなし（全員×または目標達成済み）');
-    return null;
-  }
-
-  // ソート：目標設定済みを優先し、残り回数が少ない人から埋める
-  available.sort((a, b) => {
-    // 1. 目標設定済みを優先（設定あり < 設定なし）
-    if (a.hasTarget && !b.hasTarget) return -1;
-    if (!a.hasTarget && b.hasTarget) return 1;
-
-    // 2. そのperiod（AM/PM）の回数が少ない人を優先
-    const aCount = period === 'am' ? a.amTotal : a.pmTotal;
-    const bCount = period === 'am' ? b.amTotal : b.pmTotal;
-    if (aCount !== bCount) return aCount - bCount;
-
-    // 3. 合計回数が少ない人を次に優先
-    if (a.total !== b.total) return a.total - b.total;
-
-    // 4. 逆のperiodの回数も考慮（バランスを取る）
-    const aOtherCount = period === 'am' ? a.pmTotal : a.amTotal;
-    const bOtherCount = period === 'am' ? b.pmTotal : b.amTotal;
-    if (aOtherCount !== bOtherCount) return aOtherCount - bOtherCount;
-
-    // 5. それでも同じなら○を優先
-    if (a.preference === '○' && b.preference !== '○') return -1;
-    if (a.preference !== '○' && b.preference === '○') return 1;
-
-    return 0;
-  });
-
-  const selected = available[0];
-  console.log(`  選択: ${selected.name} (記号:${selected.preference || '空白'}, 今月合計:${selected.total}, 目標:${targets[selected.name] ?? '未設定'})`);
-  return selected.name;
-}
-
-function selectBestBackup(date, monthlyBackupCount) {
-  if (members.length === 0) {
-    console.log('❌ メンバーが0人');
-    return null;
-  }
-  
-  // その日の担当者を除外
-  const amAssigned = assignedData[date + '_am'];
-  const pmAssigned = assignedData[date + '_pm'];
-  
-  const candidates = members.map(name => {
-    // 担当者は除外
-    if (name === amAssigned || name === pmAssigned) {
-      return null;
-    }
-    
-    const amKey = `${date}_${name}_am`;
-    const pmKey = `${date}_${name}_pm`;
-    const amPreference = shiftData[amKey] || '';
-    const pmPreference = shiftData[pmKey] || '';
-    
-    // AM/PMどちらかが×でなければ選択可能（完全公平モード）
-    const isAvailable = amPreference !== '×' || pmPreference !== '×';
-    
-    return {
-      name,
-      isAvailable,
-      amPreference,
-      pmPreference,
-      backupCount: monthlyBackupCount[name] || 0
-    };
-  }).filter(c => c !== null && c.isAvailable);
-  
-  if (candidates.length === 0) {
-    console.log('  バックアップ候補なし（全員×または担当者）');
-    return null;
-  }
-  
-  console.log(`${date} バックアップ候補:`, candidates);
-  
-  // 完全公平：バックアップ回数が最も少ない人を選ぶ
-  candidates.sort((a, b) => {
-    // 1. 今月のバックアップ回数が少ない人を優先
-    if (a.backupCount !== b.backupCount) return a.backupCount - b.backupCount;
-    
-    // 2. それでも同じなら○がある人を優先（微調整）
-    const aHasGood = a.amPreference === '○' || a.pmPreference === '○';
-    const bHasGood = b.amPreference === '○' || b.pmPreference === '○';
-    if (aHasGood && !bHasGood) return -1;
-    if (!aHasGood && bHasGood) return 1;
-    
-    return 0;
-  });
-  
-  const selected = candidates[0];
-  console.log(`  完全公平モードでバックアップ選択: ${selected.name} (今月バックアップ${selected.backupCount}回)`);
-  return selected.name;
-}
-
-function updateCountTable() {
-  const tbody = document.getElementById('countTableBody');
-  if (!tbody) {
-    console.error('❌ countTableBodyが見つかりません');
-    return;
-  }
-  
-  console.log('📊 カウント表を更新', {
-    メンバー数: members.length,
-    年月: `${currentYear}年${currentMonth}月`
-  });
-  
-  tbody.innerHTML = '';
-  
-  if (members.length === 0) {
-    console.warn('⚠️ メンバーが0人です');
-    return;
-  }
-  
-  // 今月のカウントを計算
-  const monthlyCount = {};
-  members.forEach(name => {
-    monthlyCount[name] = { am: 0, pm: 0, backup: 0 };
-  });
-  
-  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    
-    const amAssigned = assignedData[dateStr + '_am'];
-    const pmAssigned = assignedData[dateStr + '_pm'];
-    const amBackup = backupAssignedData[dateStr + '_am'];
-    const pmBackup = backupAssignedData[dateStr + '_pm'];
-    
-    if (amAssigned && monthlyCount[amAssigned]) {
-      monthlyCount[amAssigned].am++;
-    }
-    if (pmAssigned && monthlyCount[pmAssigned]) {
-      monthlyCount[pmAssigned].pm++;
-    }
-    if (amBackup && monthlyCount[amBackup]) {
-      monthlyCount[amBackup].backup++;
-    }
-    if (pmBackup && monthlyCount[pmBackup]) {
-      monthlyCount[pmBackup].backup++;
-    }
-  }
-  
-  // 累計：その年度の4月から表示中の月までの合計
-  const cumulativeCount = {};
-  members.forEach(name => {
-    cumulativeCount[name] = { am: 0, pm: 0, backup: 0 };
-  });
-  
-  // 年度の開始日を計算（その年度の4月1日）
-  const fiscalYearStart = `${currentFiscalYear}-04-01`;
-  
-  // 表示中の月の年月文字列
-  const currentMonthStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
-  
-  // assignedDataから年度開始以降、表示中の月までのデータをカウント
-  Object.keys(assignedData).forEach(key => {
-    const name = assignedData[key];
-    if (!name) return;
-    
-    // keyの形式: "YYYY-MM-DD_am" または "YYYY-MM-DD_pm"
-    const parts = key.split('_');
-    const dateStr = parts[0];
-    const period = parts[1];
-    
-    // 年度開始以降、かつ表示中の月以前かチェック
-    if (dateStr >= fiscalYearStart && dateStr.substring(0, 7) <= currentMonthStr) {
-      if (cumulativeCount[name]) {
-        if (period === 'am') {
-          cumulativeCount[name].am++;
-        } else if (period === 'pm') {
-          cumulativeCount[name].pm++;
-        }
-      }
-    }
-  });
-  
-  // backupAssignedDataから年度開始以降、表示中の月までのバックアップをカウント
-  Object.keys(backupAssignedData).forEach(key => {
-    const name = backupAssignedData[key];
-    if (!name) return;
-    
-    // keyの形式: "YYYY-MM-DD_am" または "YYYY-MM-DD_pm"
-    const parts = key.split('_');
-    const dateStr = parts[0];
-    
-    // 年度開始以降、かつ表示中の月以前かチェック
-    if (dateStr >= fiscalYearStart && dateStr.substring(0, 7) <= currentMonthStr) {
-      if (cumulativeCount[name]) {
-        cumulativeCount[name].backup++;
-      }
-    }
-  });
-  
-  console.log('📊 今月カウント:', monthlyCount);
-  console.log(`📊 ${currentFiscalYear}年度（${fiscalYearStart}～${currentMonthStr}）の累計:`, cumulativeCount);
-  
-  // テーブルに表示
-  members.forEach(name => {
-    const monthly = monthlyCount[name] || { am: 0, pm: 0, backup: 0 };
-    const cumulative = cumulativeCount[name] || { am: 0, pm: 0, backup: 0 };
-
-    // 目標回数を取得
-    const monthKey = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
-    const targets = (monthlyTargets && monthlyTargets[monthKey]) ? monthlyTargets[monthKey] : {};
-    const target = targets[name];
-    const monthTotal = monthly.am + monthly.pm;
-    let targetDisplay = '-';
-    let targetStyle = 'background:#f0f4ff;';
-    if (target === 0) {
-      targetDisplay = '0（対象外）';
-      targetStyle = 'background:#eee; color:#999;';
-    } else if (target > 0) {
-      const reached = monthTotal >= target;
-      targetDisplay = `${monthTotal}/${target}`;
-      targetStyle = reached
-        ? 'background:#d4edda; font-weight:bold; color:#155724;'
-        : 'background:#fff3cd; font-weight:bold; color:#856404;';
-    }
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td style="font-weight: bold;">${name}</td>
-      <td style="background: #e3f2fd;">${monthly.am}</td>
-      <td style="background: #e3f2fd;">${monthly.pm}</td>
-      <td style="background: #bbdefb; font-weight: bold;">${monthly.am + monthly.pm}</td>
-      <td style="background: #fff9c4;">${monthly.backup}</td>
-      <td style="${targetStyle}">${targetDisplay}</td>
-      <td>${cumulative.am}</td>
-      <td>${cumulative.pm}</td>
-      <td style="font-weight: bold;">${cumulative.am + cumulative.pm}</td>
-      <td style="background: #fff9c4;">${cumulative.backup}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-  
-  console.log('✅ カウント表更新完了');
-}
-
-// 後方互換性のため、古い関数も残す
-function updateTotalsDisplay() {
-  updateCountTable();
-}
-
-function updateMonthlyCount() {
-  updateCountTable();
-}
-
-window.copyScheduleToClipboard = async function() {
-  const monthName = `${currentYear}年${currentMonth}月`;
-  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-  
-  let text = `【${monthName} シフト担当表】\n\n`;
-  text += `日付        | AM担当 | PM担当 | バックアップ\n`;
-  text += `------------|--------|--------|-------------\n`;
-  
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const date = new Date(currentYear, currentMonth - 1, day);
-    const dayOfWeek = date.getDay();
-    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
-    
-    // 土日・祝日チェック
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-    const isHoliday = holidays[dateStr] || customHolidays.includes(dateStr);
-    
-    if (isWeekend || isHoliday) {
-      continue; // 土日祝日はスキップ
-    }
-    
-    const amAssigned = assignedData[dateStr + '_am'] || '-';
-    const pmAssigned = assignedData[dateStr + '_pm'] || '-';
-    const backup = backupAssignedData[dateStr + '_am'] || '-';
-    
-    const dateDisplay = `${currentMonth}/${day}(${dayNames[dayOfWeek]})`;
-    text += `${dateDisplay.padEnd(12, ' ')}| ${amAssigned.padEnd(6, ' ')} | ${pmAssigned.padEnd(6, ' ')} | ${backup}\n`;
-  }
-  
-  text += `\n※土日祝日は除く\n`;
-  
-  try {
-    await navigator.clipboard.writeText(text);
-    alert('📧 担当表をクリップボードにコピーしました！\nメールに貼り付けてご利用ください。');
-  } catch (err) {
-    console.error('コピーに失敗:', err);
-    // フォールバック：テキストエリアを使う方法
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textarea);
-    alert('📧 担当表をクリップボードにコピーしました！\nメールに貼り付けてご利用ください。');
-  }
-};
-
-window.migrateTo2025 = async function() {
-  if (!confirm('🔄 既存データを2025年度に移行します。\n\n【重要】この操作により：\n・現在のルート直下のデータが2025年度配下に移動します\n・ルート直下のデータは削除されます\n・この操作は1回だけ実行してください\n\n続けますか？')) {
-    return;
-  }
-  
-  try {
-    console.log('🔄 データ移行開始...');
-    updateSyncStatus('syncing');
-    
-    // 1. 既に2025年度のデータがあるかチェック
-    const existing2025Snapshot = await get(ref(database, '/2025'));
-    if (existing2025Snapshot.exists()) {
-      if (!confirm('⚠️ 2025年度のデータが既に存在します。\n上書きしますか？')) {
-        updateSyncStatus('success');
-        return;
-      }
-    }
-    
-    // 2. ルート直下の既存データを読み込む
-    console.log('📥 既存データを読み込み中...');
-    const rootSnapshot = await get(ref(database, '/'));
-    const rootData = rootSnapshot.val() || {};
-    
-    console.log('📊 読み込んだデータ:', {
-      hasMembers: !!rootData.members,
-      hasShiftData: !!rootData.shiftData,
-      hasAssignedData: !!rootData.assignedData,
-      hasBackupAssignedData: !!rootData.backupAssignedData
-    });
-    
-    // 年度データ（2025, 2026等）は除外
-    const legacyData = {};
-    for (const key in rootData) {
-      if (!key.match(/^20\d{2}$/)) { // 年度形式（2025, 2026等）でない場合のみコピー
-        legacyData[key] = rootData[key];
-      }
-    }
-    
-    if (Object.keys(legacyData).length === 0) {
-      alert('❌ 移行可能なデータが見つかりませんでした。\n既に移行済みの可能性があります。');
-      updateSyncStatus('success');
+window.claimMyName = async function(){
+  const sel = document.getElementById("claimName");
+  if (!sel) return;
+  const name = sel.value;
+  if (!confirm(`${name} として登録します。\n\nこのあと自分では変更できません。よろしいですか？`)) return;
+  try{
+    status("saving","登録中…");
+    // 直前に他の人が同じ名前を登録していないか確認する
+    const snap  = await get(ref(db, `/${currentFY}/userMap`));
+    const latest = snap.val() || {};
+    if (Object.values(latest).includes(name)){
+      userMap = latest;
+      status("","");
+      alert(`${name} はすでに別のアドレスで登録されています。もう一度選び直してください。`);
+      renderAll();
       return;
     }
-    
-    console.log('📊 移行するデータ:', legacyData);
-    
-    // 3. 2025年度配下にデータをコピー
-    console.log('💾 2025年度にデータをコピー中...');
-    await set(ref(database, '/2025'), legacyData);
-    
-    console.log('✅ 2025年度にコピー完了');
-    
-    // 4. ルート直下の古いデータを削除
-    console.log('🗑️ ルート直下の古いデータを削除中...');
-    for (const key in legacyData) {
-      await set(ref(database, `/${key}`), null);
-    }
-    
-    console.log('✅ 古いデータ削除完了');
-    
-    // 5. データを再読み込み
-    currentFiscalYear = 2025;
-    document.getElementById('fiscalYearSelect').value = '2025';
-    await loadData();
-    setupRealtimeListeners();
-    renderCalendar();
-    renderMemberList();
-    renderHolidayList();
-    updateCountTable();
-    
-    updateSyncStatus('success');
-    
-    alert('✅ データ移行完了！\n\n既存データを2025年度に移行しました。\n年度選択で確認してください。');
-    
-    console.log('🎉 データ移行完了');
-    
-  } catch (error) {
-    console.error('❌ データ移行エラー:', error);
-    alert('❌ データ移行エラー:\n' + error.message + '\n\nFirebaseコンソールで手動移行をお試しください。');
-    updateSyncStatus('error');
+    await set(ref(db, `/${currentFY}/userMap/${emailKey(myEmail)}`), name);
+    userMap[emailKey(myEmail)] = name;
+    resolveMyName();
+    renderAll();
+    status("","登録しました");
+  } catch(e){
+    console.error(e);
+    status("error","登録に失敗しました");
+    alert("登録できませんでした：" + e.message);
   }
 };
 
-window.resetData = async function() {
-  if (!confirm('すべてのデータを削除しますか？この操作は取り消せません。')) return;
-  
-  const confirmText = prompt('本当に削除する場合は「削除」と入力してください');
-  if (confirmText !== '削除') return;
-  
-  members = ["竹本", "村松", "冨樫", "米村", "大原", "大橋", "野々垣", "大川", "後閑", "内藤", "吉田", "藤井", "山崎"];
-  shiftData = {};
-  assignedData = {};
-  backupAssignedData = {};
-  yearlyTotals = {};
-  customHolidays = [];
-  monthlyTargets = {};
-  
-  await saveData();
-  alert('データをリセットしました');
+window.openAdmin = function(){
+  const pw = prompt("管理者パスワードを入力してください");
+  if (pw === null) return;
+  if (pw === ADMIN_PASSWORD){
+    isAdmin = true;
+    resolveMyName();
+    switchTab("admin");
+    renderAll();
+  } else {
+    alert("パスワードが違います。");
+  }
 };
 
-</script>
+/* ===================== 画面切り替え ===================== */
+window.switchTab = function(name){
+  if (name === "admin" && !isAdmin) return;
+  activeTab = name;
+  document.querySelectorAll(".tab").forEach(b=>{
+    b.classList.toggle("active", b.dataset.tab === name);
+  });
+  ["input","schedule","admin"].forEach(t=>{
+    document.getElementById("tab-"+t).style.display = (t===name) ? "" : "none";
+  });
+  renderAll();
+};
 
+function buildFYSelect(){
+  const sel = document.getElementById("fySelect");
+  sel.innerHTML = FY_LIST.map(y=>`<option value="${y}">${y}年度（${y}/4〜${y+1}/3）</option>`).join("");
+  sel.value = String(currentFY);
+}
+
+window.changeFiscalYear = async function(){
+  const y = Number(document.getElementById("fySelect").value);
+  if (y === currentFY) return;
+  currentFY = y;
+  viewYear = y; viewMonth = 4;
+  await loadYear();
+  listenYear();
+  resolveMyName();
+  renderAll();
+};
+
+window.changeMonth = function(delta){
+  viewMonth += delta;
+  if (viewMonth > 12){ viewMonth = 1; viewYear++; }
+  if (viewMonth < 1){ viewMonth = 12; viewYear--; }
+  syncFYToView();
+};
+window.goToday = function(){
+  viewYear = today.getFullYear(); viewMonth = today.getMonth()+1;
+  syncFYToView();
+};
+async function syncFYToView(){
+  const fy = fiscalYearOf(viewYear, viewMonth);
+  if (FY_LIST.includes(fy) && fy !== currentFY){
+    currentFY = fy;
+    document.getElementById("fySelect").value = String(fy);
+    await loadYear();
+    listenYear();
+    resolveMyName();
+  }
+  renderAll();
+}
+
+/* ===================== 描画 ===================== */
+function renderAll(){
+  document.getElementById("monthLabel").textContent = `${viewYear}年${viewMonth}月`;
+  if (activeTab === "input"){ renderMyCalendar(); renderMyCount(); }
+  if (activeTab === "schedule") renderScheduleCalendar();
+  if (activeTab === "admin" && isAdmin){
+    renderTargetEditor(); renderCountTable(); renderMatrix(); renderManual();
+    renderMemberChips(); renderUserMap(); renderHolidayChips();
+  }
+}
+
+function calendarShell(){
+  const first = new Date(viewYear, viewMonth-1, 1);
+  const lead  = (first.getDay() + 6) % 7;      // 月曜を先頭にする
+  const last  = new Date(viewYear, viewMonth, 0).getDate();
+  const heads = ["月","火","水","木","金","土","日"];
+  let html = "<thead><tr>" + heads.map((h,i)=>
+    `<th class="${i===5?'sat':i===6?'sun':''}">${h}</th>`).join("") + "</tr></thead><tbody>";
+  const cells = [];
+  for (let i=0;i<lead;i++) cells.push(null);
+  for (let d=1;d<=last;d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+  return {html, cells, lead, last};
+}
+
+function renderMyCalendar(){
+  const tbl = document.getElementById("myCalendar");
+  const note = document.getElementById("lockNote");
+
+  if (myName && retired.includes(myName)){
+    note.style.display = "";
+    note.innerHTML = `${myName} さんは退職者として登録されています。`
+      + `これまでの記録は残っていますが、希望の入力はできません。`
+      + `お心当たりがない場合は担当者にご連絡ください。`;
+    tbl.innerHTML = "";
+    return;
+  }
+  if (!myName){
+    note.style.display = "";
+    const taken = new Set(Object.values(userMap));
+    const free  = members.filter(m => !taken.has(m));
+    if (!members.length){
+      note.innerHTML = "この年度のメンバーがまだ登録されていません。管理者にご連絡ください。";
+    } else if (!free.length){
+      note.innerHTML = `${myEmail} は、どのメンバーとも結びついていません。`
+        + "すべての名前が他のアドレスで登録済みです。管理者にご連絡ください。";
+    } else {
+      note.innerHTML = `<div style="margin-bottom:8px"><b>はじめに、自分の名前を登録してください。</b></div>`
+        + `<div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px">`
+        + `${myEmail} と結びつけます。登録後は自分では変更できません（変更が必要なときは管理者にご依頼ください）。</div>`
+        + `<div class="btnrow">`
+        + `<select id="claimName">${free.map(m=>`<option>${m}</option>`).join("")}</select>`
+        + `<button class="primary" onclick="claimMyName()">この名前で登録する</button></div>`;
+    }
+    tbl.innerHTML = "";
+    return;
+  }
+  note.style.display = "none";
+
+  let {html, cells} = calendarShell();
+  cells.forEach((d,i)=>{
+    if (i % 7 === 0) html += "<tr>";
+    if (d === null){ html += '<td class="blank"></td>'; }
+    else {
+      const ds = `${viewYear}-${String(viewMonth).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+      const w = new Date(ds+"T00:00:00").getDay();
+      const hol = holidayName(ds);
+      const cls = hol ? "hol" : w===0 ? "sun" : w===6 ? "sat" : "";
+      html += `<td class="${cls}">`;
+      html += `<div class="daynum"><span>${d}</span><span class="holname">${hol||""}</span></div>`;
+      if (isWorkday(ds)){
+        html += '<div class="slots">';
+        ["am","pm"].forEach(p=>{
+          const v = normMark(shiftData[`${ds}_${myName}_${p}`]);
+          html += `<div class="slot ${markClass(v)}" onclick="cycleMark('${ds}','${p}')">`
+                + `<span class="lbl">${p.toUpperCase()}</span>`
+                + `<span class="mark">${v || "&nbsp;"}</span></div>`;
+        });
+        html += "</div>";
+      }
+      html += "</td>";
+    }
+    if (i % 7 === 6) html += "</tr>";
+  });
+  tbl.innerHTML = html + "</tbody>";
+}
+
+// 以前は△（可能なら）がありました。過去データに残っていても空欄として扱います。
+function normMark(v){
+  return (v === "○" || v === "×") ? v : "";
+}
+function markClass(v){
+  return v === "○" ? "m-o" : v === "×" ? "m-x" : "";
+}
+
+window.cycleMark = function(ds, period){
+  if (!myName) return;
+  const key = `${ds}_${myName}_${period}`;
+  const cur = normMark(shiftData[key]);
+  const next = { "":"○", "○":"×", "×":"" }[cur];
+  if (!next) delete shiftData[key]; else shiftData[key] = next;
+  renderMyCalendar();
+  saveSoon();
+};
+
+window.bulkFill = function(value){
+  if (!myName) return;
+  const label = value === "" ? "この月の希望をすべて消します" : `この月をすべて ${value} にします`;
+  if (!confirm(`${viewYear}年${viewMonth}月：${label}。よろしいですか？`)) return;
+  workdaysOf(viewYear, viewMonth).forEach(ds=>{
+    ["am","pm"].forEach(p=>{
+      const key = `${ds}_${myName}_${p}`;
+      if (value === "") delete shiftData[key]; else shiftData[key] = value;
+    });
+  });
+  renderMyCalendar();
+  saveSoon();
+};
+
+function renderScheduleCalendar(){
+  const tbl = document.getElementById("scheduleCalendar");
+  const head = document.querySelector("#tab-schedule .panel h2");
+  if (head) head.textContent = `確定した担当表　${viewYear}年${viewMonth}月`;
+  let {html, cells} = calendarShell();
+  cells.forEach((d,i)=>{
+    if (i % 7 === 0) html += "<tr>";
+    if (d === null){ html += '<td class="blank"></td>'; }
+    else {
+      const ds = `${viewYear}-${String(viewMonth).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+      const w = new Date(ds+"T00:00:00").getDay();
+      const hol = holidayName(ds);
+      const cls = hol ? "hol" : w===0 ? "sun" : w===6 ? "sat" : "";
+      html += `<td class="${cls}">`;
+      html += `<div class="daynum"><span>${d}</span><span class="holname">${hol||""}</span></div>`;
+      if (isWorkday(ds)){
+        const am = assignedData[ds+"_am"] || "";
+        const pm = assignedData[ds+"_pm"] || "";
+        const bu = backupAssignedData[ds+"_am"] || "";
+        html += line("AM", am) + line("PM", pm) + line("BU", bu, true);
+      }
+      html += "</td>";
+    }
+    if (i % 7 === 6) html += "</tr>";
+  });
+  tbl.innerHTML = html + "</tbody>";
+
+  function line(lbl,name,isBU){
+    const me = name && name === myName ? " me" : "";
+    return `<div class="assign-line${isBU?" bu":""}${me}"><span class="lbl">${lbl}</span>`
+         + `<span class="nm">${name || "—"}</span></div>`;
+  }
+}
+
+/* ===================== 目標回数 ===================== */
+function targetRange(total, n){
+  if (n === 0) return {min:0,max:0,label:"—"};
+  const base = Math.floor(total/n), rem = total % n;
+  const min = base, max = rem > 0 ? base+1 : base;
+  return {min, max, label: min === max ? `${min}` : `${min}〜${max}`};
+}
+function monthKey(){ return `${viewYear}-${String(viewMonth).padStart(2,"0")}`; }
+
+// 枠数を人数で割り、余りを先頭から1ずつ配る（合計が枠数とぴったり一致する）
+function evenSplit(total, n){
+  if (n === 0) return [];
+  const base = Math.floor(total/n), rem = total % n;
+  return Array.from({length:n}, (_,i)=> base + (i < rem ? 1 : 0));
+}
+function prevMonthKey(){
+  let y = viewYear, m = viewMonth - 1;
+  if (m < 1){ m = 12; y--; }
+  return `${y}-${String(m).padStart(2,"0")}`;
+}
+function monthTargets(){
+  const wd = workdaysOf(viewYear, viewMonth).length;
+  const n  = members.length;
+  const prev = (targets[prevMonthKey()] && targets[prevMonthKey()].per) || null;
+  return {
+    workdays: wd,
+    slots: wd*2,          // 担当の枠数（AM+PM）
+    buSlots: wd,          // バックアップの枠数
+    defTotal:  evenSplit(wd*2, n),
+    defBackup: evenSplit(wd, n),
+    prev,                 // 前月の目標（あればこれを初期値にする）
+    per: (targets[monthKey()] && targets[monthKey()].per) || {}
+  };
+}
+// その人の今月の目標回数。未入力なら均等割りの値を使う。
+function targetNumbers(name){
+  const t = monthTargets();
+  const i = members.indexOf(name);
+  const o = t.per[name] || {};
+  const p = (t.prev && t.prev[name]) || {};
+  // この月の設定 → なければ前月の設定 → それもなければ均等割り
+  const pick = (field, fallback) =>
+      (typeof o[field] === "number") ? o[field]
+    : (typeof p[field] === "number") ? p[field]
+    : fallback;
+  return {
+    total:  pick("total",  t.defTotal[i]  ?? 0),
+    backup: pick("backup", t.defBackup[i] ?? 0),
+    isSet:  typeof o.total === "number" || typeof o.backup === "number",
+    fromPrev: typeof o.total !== "number" && typeof p.total === "number"
+  };
+}
+function targetFor(name){
+  const v = targetNumbers(name);
+  const fix = x => ({min:x, max:x, label:String(x)});
+  return {
+    total: fix(v.total),
+    backup: fix(v.backup),
+    am: {min: Math.floor(v.total/2), max: Math.ceil(v.total/2), label: `${Math.floor(v.total/2)}〜${Math.ceil(v.total/2)}`},
+    pm: {min: Math.floor(v.total/2), max: Math.ceil(v.total/2), label: `${Math.floor(v.total/2)}〜${Math.ceil(v.total/2)}`}
+  };
+}
+
+function monthCounts(who){
+  const c = {};
+  (who || members).forEach(m=> c[m] = {am:0,pm:0,backup:0});
+  workdaysOf(viewYear, viewMonth).forEach(ds=>{
+    ["am","pm"].forEach(p=>{
+      const n = assignedData[`${ds}_${p}`];
+      if (n && c[n]) c[n][p]++;
+      const b = backupAssignedData[`${ds}_${p}`];
+      if (b && c[b]) c[b].backup++;
+    });
+  });
+  return c;
+}
+function cumulativeCounts(who){
+  const c = {};
+  (who || members).forEach(m=> c[m] = {am:0,pm:0,backup:0});
+  const start = `${currentFY}-04-01`;
+  const endM  = `${viewYear}-${String(viewMonth).padStart(2,"0")}`;
+  const scan = (obj, field)=>{
+    Object.keys(obj).forEach(k=>{
+      const name = obj[k]; if (!name || !c[name]) return;
+      const [ds,p] = k.split("_");
+      if (ds >= start && ds.slice(0,7) <= endM){
+        if (field) c[name].backup++;
+        else if (p === "am") c[name].am++;
+        else if (p === "pm") c[name].pm++;
+      }
+    });
+  };
+  scan(assignedData, false);
+  scan(backupAssignedData, true);
+  return c;
+}
+
+function renderMyCount(){
+  const tbl = document.getElementById("myCountTable");
+  if (!myName){ tbl.innerHTML = ""; return; }
+  const m = monthCounts()[myName] || {am:0,pm:0,backup:0};
+  const y = cumulativeCounts()[myName] || {am:0,pm:0,backup:0};
+  const t = targetFor(myName);
+  tbl.innerHTML = `
+    <thead><tr><th></th><th>AM</th><th>PM</th><th>合計</th><th>バックアップ</th></tr></thead>
+    <tbody>
+      <tr><td class="name">${viewMonth}月の実績</td>
+        <td>${m.am}</td><td>${m.pm}</td><td class="sum">${m.am+m.pm}</td><td>${m.backup}</td></tr>
+      <tr><td class="name">${viewMonth}月の目標</td>
+        <td class="goal">${t.am.label}</td><td class="goal">${t.pm.label}</td>
+        <td class="goal">${t.total.label}</td><td class="goal">${t.backup.label}</td></tr>
+      <tr><td class="name">年度累計（4月〜${viewMonth}月）</td>
+        <td>${y.am}</td><td>${y.pm}</td><td class="sum">${y.am+y.pm}</td><td>${y.backup}</td></tr>
+    </tbody>`;
+}
+
+window.renderCountTable = function(){
+  const tbl = document.getElementById("countTable");
+  if (!members.length){ tbl.innerHTML = '<tbody><tr><td class="empty">メンバーが登録されていません。</td></tr></tbody>'; return; }
+  const mc = monthCounts(), yc = cumulativeCounts(), t = monthTargets();
+  const cell = (v, range)=>{
+    const cls = (v < range.min || v > range.max) ? "warn" : "ok";
+    return `<td class="${cls}">${v}</td>`;
+  };
+  let html = `<thead>
+    <tr><th rowspan="2">メンバー</th><th colspan="5">${viewMonth}月（平日${t.workdays}日）</th><th colspan="4">年度累計</th></tr>
+    <tr><th>AM</th><th>PM</th><th>合計</th><th>BU</th><th>目標(合計/BU)</th>
+        <th>AM</th><th>PM</th><th>合計</th><th>BU</th></tr>
+  </thead><tbody>`;
+  members.forEach(n=>{
+    const m = mc[n], y = yc[n], f = targetFor(n);
+    const custom = t.per[n] ? ' style="font-weight:700"' : "";
+    html += `<tr><td class="name">${n}</td>`
+      + cell(m.am, f.am) + cell(m.pm, f.pm)
+      + `<td class="${(m.am+m.pm < f.total.min || m.am+m.pm > f.total.max)?'warn':'ok'}"><b>${m.am+m.pm}</b></td>`
+      + cell(m.backup, f.backup)
+      + `<td class="goal"${custom}>${f.total.label} / ${f.backup.label}</td>`
+      + `<td>${y.am}</td><td>${y.pm}</td><td class="sum">${y.am+y.pm}</td><td>${y.backup}</td></tr>`;
+  });
+
+  const chk = document.getElementById("showRetired");
+  if (chk && chk.checked && retired.length){
+    const rm = monthCounts(retired), ry = cumulativeCounts(retired);
+    html += `<tr><td class="name" colspan="10" style="background:#eef2f6;text-align:left;color:var(--ink-soft)">退職者</td></tr>`;
+    retired.forEach(n=>{
+      const m = rm[n], y = ry[n];
+      html += `<tr style="color:var(--ink-soft)"><td class="name" style="font-weight:400">${n}</td>`
+        + `<td>${m.am}</td><td>${m.pm}</td><td><b>${m.am+m.pm}</b></td><td>${m.backup}</td>`
+        + `<td class="goal">—</td>`
+        + `<td>${y.am}</td><td>${y.pm}</td><td class="sum">${y.am+y.pm}</td><td>${y.backup}</td></tr>`;
+    });
+  }
+  tbl.innerHTML = html + "</tbody>";
+}
+
+function renderMatrix(){
+  const tbl = document.getElementById("matrixTable");
+  const days = workdaysOf(viewYear, viewMonth);
+  if (!members.length || !days.length){
+    tbl.innerHTML = '<tbody><tr><td class="empty">表示できるデータがありません。</td></tr></tbody>'; return;
+  }
+  const dn = ["日","月","火","水","木","金","土"];
+  let html = '<thead><tr><th>日付</th><th>時間</th>' + members.map(m=>`<th>${m}</th>`).join("") + "</tr></thead><tbody>";
+  days.forEach(ds=>{
+    const d = new Date(ds+"T00:00:00");
+    const label = `${d.getMonth()+1}/${d.getDate()}(${dn[d.getDay()]})`;
+    ["am","pm"].forEach((p,idx)=>{
+      html += "<tr>";
+      if (idx === 0) html += `<td rowspan="2" class="name">${label}</td>`;
+      html += `<td>${p.toUpperCase()}</td>`;
+      members.forEach(m=>{
+        const v = normMark(shiftData[`${ds}_${m}_${p}`]);
+        const c = v==="○"?"mark-o":v==="×"?"mark-x":"";
+        html += `<td class="${c}">${v || ""}</td>`;
+      });
+      html += "</tr>";
+    });
+  });
+  tbl.innerHTML = html + "</tbody>";
+}
+
+function renderManual(){
+  const tbl = document.getElementById("manualTable");
+  const days = workdaysOf(viewYear, viewMonth);
+  if (!members.length || !days.length){
+    tbl.innerHTML = '<tbody><tr><td class="empty">表示できるデータがありません。</td></tr></tbody>'; return;
+  }
+  const dn = ["日","月","火","水","木","金","土"];
+  const opts = (sel)=> '<option value=""></option>' +
+    members.map(m=>`<option value="${m}"${m===sel?" selected":""}>${m}</option>`).join("");
+  let html = '<thead><tr><th>日付</th><th>AM担当</th><th>PM担当</th><th>バックアップ</th></tr></thead><tbody>';
+  days.forEach(ds=>{
+    const d = new Date(ds+"T00:00:00");
+    html += `<tr><td class="name">${d.getMonth()+1}/${d.getDate()}(${dn[d.getDay()]})</td>`
+      + `<td><select onchange="setAssign('${ds}','am',this.value)">${opts(assignedData[ds+"_am"]||"")}</select></td>`
+      + `<td><select onchange="setAssign('${ds}','pm',this.value)">${opts(assignedData[ds+"_pm"]||"")}</select></td>`
+      + `<td><select onchange="setBackup('${ds}',this.value)">${opts(backupAssignedData[ds+"_am"]||"")}</select></td></tr>`;
+  });
+  tbl.innerHTML = html + "</tbody>";
+}
+function renderTargetEditor(){
+  const rc = document.getElementById("showRetired");
+  if (rc) rc.parentElement.style.display = retired.length ? "" : "none";
+  const box = document.getElementById("targetEditor");
+  const chk = document.getElementById("targetCheck");
+  const t = monthTargets();
+
+  if (!members.length){
+    box.innerHTML = '<p class="hint" style="margin:0">メンバーが登録されていません。</p>';
+    chk.textContent = ""; return;
+  }
+
+  let sumT = 0, sumB = 0;
+  let rows = "";
+  members.forEach(n=>{
+    const v = targetNumbers(n);
+    sumT += v.total; sumB += v.backup;
+    const inp = (field,val)=>
+      `<input type="number" min="0" max="99" value="${val}" data-name="${n}" data-field="${field}"`
+      + ` onchange="setTarget(this)" onfocus="this.select()"`
+      + ` style="width:56px;padding:4px 6px;border:1px solid var(--line);border-radius:4px;font-family:inherit;text-align:center">`;
+    rows += `<tr><td class="name">${n}</td><td>${inp("total", v.total)}</td><td>${inp("backup", v.backup)}</td></tr>`;
+  });
+
+  const foot = (label,sum,slots)=>{
+    const ok = sum === slots;
+    return `<td class="${ok?'ok':'warn'}"><b>${sum}</b> / ${slots}</td>`;
+  };
+
+  box.innerHTML =
+    `<p class="hint" style="margin:0 0 10px">`
+    + `平日${t.workdays}日 → 担当 <b>${t.slots}枠</b>（AM${t.workdays}＋PM${t.workdays}）、バックアップ <b>${t.buSlots}枠</b>。`
+    + `合計がこの枠数とぴったり合うように入れてください。入力するとその場で保存されます。`
+    + (t.per && Object.keys(t.per).length ? "" :
+        (t.prev ? "<br>いまは<b>前月と同じ目標</b>を表示しています。" : "<br>いまは<b>枠数を人数で割った値</b>を表示しています。"))
+    + `</p>`
+    + `<div class="tblwrap"><table class="data"><thead><tr>`
+    + `<th>メンバー</th><th>担当（AM+PM）</th><th>バックアップ</th></tr></thead><tbody>`
+    + rows
+    + `<tr><td class="name">合計</td>${foot("担当",sumT,t.slots)}${foot("BU",sumB,t.buSlots)}</tr>`
+    + `</tbody></table></div>`;
+
+  const msg = [];
+  if (sumT !== t.slots) msg.push(`担当の合計が${sumT}回です。枠数${t.slots}と${Math.abs(sumT-t.slots)}回ずれています。`);
+  if (sumB !== t.buSlots) msg.push(`バックアップの合計が${sumB}回です。枠数${t.buSlots}と${Math.abs(sumB-t.buSlots)}回ずれています。`);
+  chk.textContent = msg.length ? "⚠ " + msg.join(" ") : "合計が枠数とぴったり一致しています。";
+  chk.style.color = msg.length ? "#b26a00" : "var(--ok)";
+}
+
+window.setTarget = function(el){
+  const name  = el.dataset.name;
+  const field = el.dataset.field;
+  let v = Number(el.value);
+  if (!Number.isFinite(v) || v < 0) v = 0;
+  const k = monthKey();
+  if (!targets[k]) targets[k] = {per:{}};
+  if (!targets[k].per) targets[k].per = {};
+  if (!targets[k].per[name]){
+    // 片方だけ触ったときに、もう片方が既定値のまま固定されるようにする
+    const cur = targetNumbers(name);
+    targets[k].per[name] = {total: cur.total, backup: cur.backup};
+  }
+  targets[k].per[name][field] = v;
+  renderTargetEditor();
+  renderCountTable();
+  saveSoon();
+};
+
+window.setAssign = function(ds,p,v){
+  if (v) assignedData[`${ds}_${p}`] = v; else delete assignedData[`${ds}_${p}`];
+  renderCountTable(); saveSoon();
+};
+window.setBackup = function(ds,v){
+  if (v) backupAssignedData[`${ds}_am`] = v; else delete backupAssignedData[`${ds}_am`];
+  renderCountTable(); saveSoon();
+};
+
+/* ===================== 自動割り振り ===================== */
+function pref(ds,name,p){ return normMark(shiftData[`${ds}_${name}_${p}`]); }
+
+function assignSlots(days, period, counts, opts){
+  // capOf(name): この枠でその人が持てる上限 / capTotalOf(name): 合計の上限（BUではnull）
+  const {capOf, capTotalOf, store, keyOf, field} = opts;
+  const unfilled = [];
+  const markAt = (ds,n) => opts.markOf ? opts.markOf(ds,n) : pref(ds,n,period);
+
+  // この先の日程で、その人があと何枠入れるか（×の日は数えない）を先に数えておく。
+  // 「9/1しか空いていない人」を、その9/1で優先するために使う。
+  const remain = {};
+  members.forEach(n=>{
+    const arr = new Array(days.length + 1).fill(0);
+    for (let i = days.length - 1; i >= 0; i--){
+      const usable = markAt(days[i], n) !== "×" && !store[keyOf(days[i])];
+      arr[i] = arr[i+1] + (usable ? 1 : 0);
+    }
+    remain[n] = arr;
+  });
+  // その人があとどれだけ入る必要があるか ÷ あと入れる枠数。大きいほど急ぐ。
+  const urgency = (n, idx) => {
+    const c  = counts[n];
+    const pc = field === "backup" ? c.backup : c[period];
+    const need = Math.max(0, capOf(n) - pc);
+    if (need === 0) return 0;
+    const left = Math.max(1, remain[n][idx]);
+    return need / left;
+  };
+
+  days.forEach((ds, idx)=>{
+    const key = keyOf(ds);
+    if (store[key]) return;                 // 手で入れた担当はそのまま残す
+
+    const sameDay = opts.excludeSameDay ? opts.excludeSameDay(ds) : [];
+    const banned  = opts.hardExclude ? opts.hardExclude(ds) : [];
+
+    // 候補を探す。× の人は選ばず、目標回数も超えない。
+    // 0: 同じ日にすでに入っている人を避ける  1: それも許す（人数が足りないとき）
+    // どちらでも見つからなければ、その枠は空欄のままにする。
+    let picked = null;
+    for (let lv=0; lv<2 && !picked; lv++){
+      const cands = members.filter(n=>{
+        if (banned.includes(n)) return false;
+        const mark = opts.markOf ? opts.markOf(ds,n) : pref(ds,n,period);
+        if (mark === "×") return false;                       // ×の人は絶対に入れない
+        if (lv === 0 && sameDay.includes(n)) return false;
+        const c  = counts[n];
+        const pc = field === "backup" ? c.backup : c[period];
+        if (pc >= capOf(n)) return false;                     // 目標を超えない
+        if (capTotalOf && (c.am + c.pm) >= capTotalOf(n)) return false;
+        return true;
+      });
+      if (!cands.length) continue;
+      cands.sort((a,b)=>{
+        const ca = counts[a], cb = counts[b];
+        // 入れる日が少なく、まだ回数が足りない人を最優先にする
+        const ua = urgency(a, idx), ub = urgency(b, idx);
+        if (Math.abs(ua - ub) > 1e-9) return ub - ua;
+        // 目標の下限にまだ届いていない人を先に
+        const da = deficitOf(a, ca, field, period), dbb = deficitOf(b, cb, field, period);
+        if (da !== dbb) return dbb - da;
+        const pa = field === "backup" ? ca.backup : ca[period];
+        const pb = field === "backup" ? cb.backup : cb[period];
+        if (pa !== pb) return pa - pb;
+        const ta = ca.am+ca.pm, tb = cb.am+cb.pm;
+        if (ta !== tb) return ta - tb;
+        // ○を書いている人を先に。バックアップではAM・PMどちらの○も見る。
+        const rank = v => v === "○" ? 0 : 1;
+        const ra = rank(markAt(ds,a)), rb = rank(markAt(ds,b));
+        if (ra !== rb) return ra - rb;
+        return Math.random() - 0.5;
+      });
+      picked = cands[0];
+    }
+    if (picked){
+      store[key] = picked;
+      if (field === "backup") counts[picked].backup++;
+      else counts[picked][period]++;
+    } else {
+      unfilled.push(ds);
+    }
+  });
+  return unfilled;
+}
+
+function deficitOf(name, c, field, period){
+  const f = targetFor(name);
+  if (field === "backup") return Math.max(0, f.backup.min - c.backup);
+  return Math.max(0, f.total.min - (c.am + c.pm));
+}
+
+// 目標の範囲（下限〜上限）に収まるように担当を移し替える
+function rebalance(days, period, counts, opts){
+  const {store, keyOf, field, lim} = opts;
+  const get  = n => field === "backup" ? counts[n].backup : counts[n][period];
+  const mark = (ds,n) => opts.markOf ? opts.markOf(ds,n) : pref(ds,n,period);
+  const canTake = (ds,n) =>
+    mark(ds,n) !== "×" && !(opts.conflict && opts.conflict(ds,n)) && store[keyOf(ds)] !== n;
+  const move = (ds,from,to)=>{
+    store[keyOf(ds)] = to;
+    if (field === "backup"){ counts[from].backup--; counts[to].backup++; }
+    else { counts[from][period]--; counts[to][period]++; }
+  };
+
+  for (let iter=0; iter<500; iter++){
+    const over  = members.filter(n=> get(n) > lim(n).max).sort((a,b)=>(get(b)-lim(b).max)-(get(a)-lim(a).max));
+    const under = members.filter(n=> get(n) < lim(n).min).sort((a,b)=>(lim(b).min-get(b))-(lim(a).min-get(a)));
+    if (!over.length && !under.length) return true;
+
+    const donors    = over.length  ? over  : members.filter(n=> get(n) > lim(n).min);
+    const receivers = under.length ? under : members.filter(n=> get(n) < lim(n).max);
+    let moved = false;
+
+    // 直接渡す
+    outer1:
+    for (const h of donors) for (const l of receivers){
+      if (h === l) continue;
+      for (const ds of days){
+        if (store[keyOf(ds)] !== h) continue;
+        if (!canTake(ds,l)) continue;
+        move(ds,h,l); moved = true; break outer1;
+      }
+    }
+    if (moved) continue;
+
+    // 間に一人はさんで渡す（h → mid → l）
+    outer2:
+    for (const h of donors) for (const l of receivers){
+      if (h === l) continue;
+      for (const mid of members){
+        if (mid === h || mid === l) continue;
+        if (get(mid) + 1 > lim(mid).max) continue;
+        let d1 = null, d2 = null;
+        for (const ds of days){ if (store[keyOf(ds)] === h   && canTake(ds,mid)){ d1 = ds; break; } }
+        if (!d1) continue;
+        for (const ds of days){ if (ds !== d1 && store[keyOf(ds)] === mid && canTake(ds,l)){ d2 = ds; break; } }
+        if (!d2) continue;
+        move(d1,h,mid); move(d2,mid,l); moved = true; break outer2;
+      }
+    }
+    if (!moved) return false;
+  }
+  return false;
+}
+
+// 合計（AM+PM）が目標に収まるように、AM枠・PM枠をまたいで移し替える
+function balanceTotals(days, counts){
+  const tot = n => counts[n].am + counts[n].pm;
+  const lim = n => targetFor(n).total;
+  const slots = [];
+  days.forEach(ds => ["am","pm"].forEach(p => slots.push([ds,p])));
+  const canTake = (ds,p,n)=>{
+    if (pref(ds,n,p) === "×") return false;
+    const other = p === "am" ? assignedData[`${ds}_pm`] : assignedData[`${ds}_am`];
+    return other !== n && assignedData[`${ds}_${p}`] !== n;
+  };
+  const move = (ds,p,from,to)=>{
+    assignedData[`${ds}_${p}`] = to; counts[from][p]--; counts[to][p]++;
+  };
+
+  for (let iter=0; iter<500; iter++){
+    const over  = members.filter(n=> tot(n) > lim(n).max).sort((a,b)=>(tot(b)-lim(b).max)-(tot(a)-lim(a).max));
+    const under = members.filter(n=> tot(n) < lim(n).min).sort((a,b)=>(lim(b).min-tot(b))-(lim(a).min-tot(a)));
+    if (!over.length && !under.length) return;
+
+    const donors    = over.length  ? over  : members.filter(n=> tot(n) > lim(n).min);
+    const receivers = under.length ? under : members.filter(n=> tot(n) < lim(n).max);
+    let moved = false;
+
+    outer1:
+    for (const h of donors) for (const l of receivers){
+      if (h === l) continue;
+      for (const [ds,p] of slots){
+        if (assignedData[`${ds}_${p}`] !== h) continue;
+        if (!canTake(ds,p,l)) continue;
+        move(ds,p,h,l); moved = true; break outer1;
+      }
+    }
+    if (moved) continue;
+
+    outer2:
+    for (const h of donors) for (const l of receivers){
+      if (h === l) continue;
+      for (const mid of members){
+        if (mid === h || mid === l) continue;
+        let s1 = null, s2 = null;
+        for (const s of slots){
+          if (assignedData[`${s[0]}_${s[1]}`] === h && canTake(s[0],s[1],mid)){ s1 = s; break; }
+        }
+        if (!s1) continue;
+        for (const s of slots){
+          if ((s[0] !== s1[0] || s[1] !== s1[1]) && assignedData[`${s[0]}_${s[1]}`] === mid && canTake(s[0],s[1],l)){ s2 = s; break; }
+        }
+        if (!s2) continue;
+        move(s1[0],s1[1],h,mid); move(s2[0],s2[1],mid,l); moved = true; break outer2;
+      }
+    }
+    if (!moved) return;
+  }
+}
+
+window.runAutoAssign = function(){
+  if (!isAdmin) return;
+  if (!members.length){ alert("先にメンバーを登録してください。"); return; }
+  const days = workdaysOf(viewYear, viewMonth);
+  if (!days.length){ alert("この月に平日がありません。"); return; }
+
+  const counts = monthCounts();       // 手で入れた担当も含めた現在の回数
+  const t = monthTargets();
+
+  const amCap    = n => targetFor(n).am.max;
+  const totalCap = n => targetFor(n).total.max;
+  const buCap    = n => targetFor(n).backup.max;
+  const buMark   = (ds,n) =>
+      (pref(ds,n,"am") === "×" && pref(ds,n,"pm") === "×") ? "×"
+    : (pref(ds,n,"am") === "○" || pref(ds,n,"pm") === "○") ? "○" : "";
+
+  // --- AM ---
+  const uAM = assignSlots(days, "am", counts, {
+    capOf: amCap, capTotalOf: totalCap, store: assignedData,
+    keyOf: ds => `${ds}_am`, field: "am",
+    excludeSameDay: ds => [assignedData[`${ds}_pm`]].filter(Boolean)
+  });
+  rebalance(days, "am", counts, {
+    store: assignedData, keyOf: ds=>`${ds}_am`, field:"am",
+    lim: n => targetFor(n).am,
+    conflict: (ds,n)=> assignedData[`${ds}_pm`] === n
+  });
+
+  // --- PM ---
+  const uPM = assignSlots(days, "pm", counts, {
+    capOf: n => targetFor(n).pm.max, capTotalOf: totalCap, store: assignedData,
+    keyOf: ds => `${ds}_pm`, field: "pm",
+    excludeSameDay: ds => [assignedData[`${ds}_am`]].filter(Boolean)
+  });
+  rebalance(days, "pm", counts, {
+    store: assignedData, keyOf: ds=>`${ds}_pm`, field:"pm",
+    lim: n => targetFor(n).pm,
+    conflict: (ds,n)=> assignedData[`${ds}_am`] === n
+  });
+
+  // --- 合計を目標に合わせる ---
+  balanceTotals(days, counts);
+
+  // --- バックアップ（AM欄のみ・その日の担当者は除く） ---
+  const uBU = assignSlots(days, "am", counts, {
+    capOf: buCap, capTotalOf: null, store: backupAssignedData,
+    keyOf: ds => `${ds}_am`, field: "backup",
+    hardExclude: ds => [assignedData[`${ds}_am`], assignedData[`${ds}_pm`]].filter(Boolean),
+    markOf: buMark
+  });
+  rebalance(days, "am", counts, {
+    store: backupAssignedData, keyOf: ds=>`${ds}_am`, field:"backup",
+    lim: n => targetFor(n).backup,
+    markOf: (ds,n)=> buMark(ds,n) === "×" ? "×" : "",
+    conflict: (ds,n)=> assignedData[`${ds}_am`] === n || assignedData[`${ds}_pm`] === n
+  });
+
+  // --- 結果を点検する ---
+  const after = monthCounts();
+  const outTotal = members.filter(n=>{
+    const f = targetFor(n), v = after[n].am + after[n].pm;
+    return v < f.total.min || v > f.total.max;
+  });
+  const outBU = members.filter(n=>{
+    const f = targetFor(n);
+    return after[n].backup < f.backup.min || after[n].backup > f.backup.max;
+  });
+
+  const notes = [];
+  if (uAM.length || uPM.length) notes.push(`空欄になった枠：AM ${uAM.length}件、PM ${uPM.length}件`);
+  if (uBU.length) notes.push(`バックアップが空欄の日：${uBU.length}件`);
+  if (outTotal.length) notes.push(`合計が目標から外れた人：${outTotal.join("、")}`);
+  if (outBU.length) notes.push(`バックアップが目標から外れた人：${outBU.join("、")}`);
+
+  document.getElementById("assignResult").textContent =
+    notes.length
+      ? "割り振りました。" + notes.join(" ／ ")
+        + "。空欄は、全員が×か、目標を超えずに入れる人がいなかった枠です。手で調整するか、目標を見直してください。"
+      : "割り振りました。全員が目標どおりの回数で、空欄もありません。";
+
+  saveYear();
+  renderAll();
+};
+
+window.clearAssignments = function(){
+  if (!isAdmin) return;
+  if (!confirm(`${viewYear}年${viewMonth}月の担当・バックアップをすべて取り消します。よろしいですか？`)) return;
+  workdaysOf(viewYear, viewMonth).forEach(ds=>{
+    delete assignedData[`${ds}_am`];
+    delete assignedData[`${ds}_pm`];
+    delete backupAssignedData[`${ds}_am`];
+    delete backupAssignedData[`${ds}_pm`];
+  });
+  document.getElementById("assignResult").textContent = "この月の割り振りを取り消しました。";
+  saveYear(); renderAll();
+};
+
+/* ===================== メンバー・対応表・休日 ===================== */
+function renderMemberChips(){
+  const el = document.getElementById("memberChips");
+  el.innerHTML = members.length
+    ? members.map((m,i)=>
+        `<span class="chip">`
+        + `<button class="ord" onclick="moveMember(${i},-1)" title="上へ"${i===0?" disabled":""}>▲</button>`
+        + `<button class="ord" onclick="moveMember(${i},1)" title="下へ"${i===members.length-1?" disabled":""}>▼</button>`
+        + `<span class="nm">${m}</span>`
+        + `<button onclick="retireMember('${m}')" title="退職にする" style="color:var(--ink-soft);font-size:11px;text-decoration:underline">退職</button>`
+        + `<button onclick="removeMember('${m}')" title="記録ごと削除">×</button></span>`).join("")
+      + '<p class="hint" style="margin:8px 0 0">▲▼で並び順を変えられます。この順番が、希望一覧・担当回数・目標設定など、すべての表に反映されます。</p>'
+    : '<span class="hint">まだメンバーがいません。名前を入力して追加してください。</span>';
+
+  const box = document.getElementById("retiredBox");
+  if (!retired.length){ box.innerHTML = ""; return; }
+  box.innerHTML = `<h3 style="margin-top:16px">退職者（${retired.length}名）</h3>`
+    + `<p class="hint" style="margin:0 0 8px">一覧・割り振り・目標設定からは外れます。過去の担当記録は残ります。</p>`
+    + retired.map(m=>
+        `<span class="chip" style="background:#f4f6f8;color:var(--ink-soft)">${m}`
+        + `<button onclick="unretireMember('${m}')" title="メンバーに戻す" style="color:var(--brand);font-size:11px;text-decoration:underline">復帰</button>`
+        + `<button onclick="removeMember('${m}')" title="記録ごと削除">×</button></span>`).join("");
+}
+
+window.moveMember = function(i, dir){
+  const j = i + dir;
+  if (j < 0 || j >= members.length) return;
+  [members[i], members[j]] = [members[j], members[i]];
+  renderMemberChips(); renderTargetEditor(); renderCountTable(); renderMatrix(); renderManual();
+  saveSoon();
+};
+
+window.retireMember = function(n){
+  if (!confirm(`${n} さんを退職者にします。\n\n・一覧、割り振り、目標設定から外れます\n・これまでの担当記録は残ります\n・あとで「復帰」で戻せます\n\nよろしいですか？`)) return;
+  members = members.filter(m=>m!==n);
+  if (!retired.includes(n)) retired.push(n);
+  saveYear(); renderAll();
+};
+
+window.unretireMember = function(n){
+  retired = retired.filter(m=>m!==n);
+  if (!members.includes(n)) members.push(n);
+  saveYear(); renderAll();
+};
+
+window.addMember = function(){
+  const inp = document.getElementById("newMemberInput");
+  const n = inp.value.trim();
+  if (!n) return;
+  if (members.includes(n)){ alert("同じ名前がすでにあります。"); return; }
+  if (retired.includes(n)){ alert(`${n} さんは退職者として登録されています。「復帰」で戻してください。`); return; }
+  members.push(n); inp.value = "";
+  saveYear(); renderAll();
+};
+window.removeMember = function(n){
+  if (!confirm(`${n} さんの記録をすべて消します。\n\n入力済みの希望も、これまでの担当記録も残りません。\n記録を残したい場合は「退職」を使ってください。\n\n本当に削除しますか？`)) return;
+  members = members.filter(m=>m!==n);
+  retired = retired.filter(m=>m!==n);
+  Object.keys(shiftData).forEach(k=>{ if (k.split("_")[1] === n) delete shiftData[k]; });
+  Object.keys(assignedData).forEach(k=>{ if (assignedData[k] === n) delete assignedData[k]; });
+  Object.keys(backupAssignedData).forEach(k=>{ if (backupAssignedData[k] === n) delete backupAssignedData[k]; });
+  Object.keys(userMap).forEach(k=>{ if (userMap[k] === n) delete userMap[k]; });
+  saveYear(); renderAll();
+};
+window.copyMembersFromPrevYear = async function(){
+  const prev = currentFY - 1;
+  const snap = await get(ref(db, `/${prev}/members`));
+  const prevMembers = snap.val();
+  if (!Array.isArray(prevMembers) || !prevMembers.length){
+    alert(`${prev}年度のメンバーが見つかりませんでした。`); return;
+  }
+  if (!confirm(`${prev}年度のメンバー${prevMembers.length}名を${currentFY}年度に追加します。よろしいですか？`)) return;
+  prevMembers.forEach(m=>{ if (!members.includes(m)) members.push(m); });
+  saveYear(); renderAll();
+};
+
+function renderUserMap(){
+  const tbl = document.getElementById("userMapTable");
+  const rows = Object.keys(userMap);
+  let html = '<thead><tr><th>メールアドレス</th><th>メンバー</th><th></th></tr></thead><tbody>';
+  rows.forEach(k=>{
+    html += `<tr><td class="name">${k.replace(/,/g,".")}</td><td>${userMap[k]}</td>`
+         + `<td><button class="danger" onclick="removeUserMap('${k}')">削除</button></td></tr>`;
+  });
+  html += `<tr>
+    <td><input type="email" id="mapEmail" placeholder="name@example.com" style="width:100%;padding:5px;border:1px solid var(--line);border-radius:4px;font-family:inherit"></td>
+    <td><select id="mapName">${members.map(m=>`<option>${m}</option>`).join("")}</select></td>
+    <td><button onclick="addUserMap()">登録</button></td></tr>`;
+  tbl.innerHTML = html + "</tbody>";
+}
+window.addUserMap = function(){
+  const e = document.getElementById("mapEmail").value.trim().toLowerCase();
+  const n = document.getElementById("mapName").value;
+  if (!e || !n) return;
+  userMap[emailKey(e)] = n;
+  saveYear(); renderAll();
+};
+window.removeUserMap = function(k){
+  delete userMap[k]; saveYear(); renderAll();
+};
+
+function renderHolidayChips(){
+  const el = document.getElementById("holidayChips");
+  const list = [...customHolidays].sort();
+  el.innerHTML = list.length
+    ? list.map(d=>`<span class="chip">${d}<button onclick="removeHoliday('${d}')" title="削除">×</button></span>`).join("")
+    : '<span class="hint">追加した休日はありません。</span>';
+}
+window.addHoliday = function(){
+  const v = document.getElementById("holidayInput").value;
+  if (!v) return;
+  if (!customHolidays.includes(v)) customHolidays.push(v);
+  document.getElementById("holidayInput").value = "";
+  saveYear(); renderAll();
+};
+window.removeHoliday = function(d){
+  customHolidays = customHolidays.filter(x=>x!==d);
+  saveYear(); renderAll();
+};
+
+/* ===================== コピー・移行・リセット ===================== */
+window.copySchedule = async function(){
+  const dn = ["日","月","火","水","木","金","土"];
+  const days = workdaysOf(viewYear, viewMonth);
+  let text = `【${viewYear}年${viewMonth}月 シフト担当表】\n\n`;
+  text += "日付        | AM担当   | PM担当   | バックアップ\n";
+  text += "------------|----------|----------|-------------\n";
+  days.forEach(ds=>{
+    const d = new Date(ds+"T00:00:00");
+    const label = `${d.getMonth()+1}/${d.getDate()}(${dn[d.getDay()]})`;
+    const pad = (s,n)=>{
+      let w = 0; for (const ch of s) w += ch.charCodeAt(0) > 255 ? 2 : 1;
+      return s + " ".repeat(Math.max(0, n - w));
+    };
+    text += `${pad(label,12)}| ${pad(assignedData[ds+"_am"]||"—",9)}| ${pad(assignedData[ds+"_pm"]||"—",9)}| ${backupAssignedData[ds+"_am"]||"—"}\n`;
+  });
+  text += "\n※土日祝日は除く\n";
+  try{
+    await navigator.clipboard.writeText(text);
+    alert("担当表をコピーしました。メールに貼り付けてください。");
+  } catch{
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); document.body.removeChild(ta);
+    alert("担当表をコピーしました。メールに貼り付けてください。");
+  }
+};
+
+window.migrateToFY = async function(){
+  if (!isAdmin) return;
+  if (!confirm("年度分けを導入する前のデータを2025年度に移します。一度だけ実行してください。続けますか？")) return;
+  try{
+    status("saving","移行中…");
+    const snap = await get(ref(db,"/"));
+    const root = snap.val() || {};
+    const legacy = {};
+    Object.keys(root).forEach(k=>{ if (!/^20\d{2}$/.test(k)) legacy[k] = root[k]; });
+    if (!Object.keys(legacy).length){
+      status("",""); alert("移せるデータが見つかりませんでした。すでに移行済みのようです。"); return;
+    }
+    const cur = (await get(ref(db,"/2025"))).val() || {};
+    if (Object.keys(cur).length && !confirm("2025年度にすでにデータがあります。上書きしますか？")){ status("",""); return; }
+    await set(ref(db,"/2025"), legacy);
+    for (const k of Object.keys(legacy)) await set(ref(db,`/${k}`), null);
+    currentFY = 2025;
+    document.getElementById("fySelect").value = "2025";
+    await loadYear(); listenYear(); resolveMyName(); renderAll();
+    status("","移行しました");
+    alert("2025年度に移しました。内容を確認してください。");
+  } catch(e){
+    console.error(e); status("error","移行に失敗しました");
+    alert("移行できませんでした：" + e.message);
+  }
+};
+
+window.resetYearData = async function(){
+  if (!isAdmin) return;
+  if (!confirm(`${currentFY}年度のデータをすべて消します。取り消せません。よろしいですか？`)) return;
+  if (!confirm("もう一度確認します。本当に消してよろしいですか？")) return;
+  members = []; shiftData = {}; assignedData = {}; backupAssignedData = {};
+  userMap = {}; customHolidays = []; retired = []; targets = {};
+  await saveYear(); renderAll();
+};
+</script>
 </body>
 </html>
